@@ -24,6 +24,6 @@ const BundleUpdater = BundleUpdaterModule
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return BundleUpdater.multiply(a, b);
-}
+// export function multiply(a: number, b: number): Promise<number> {
+//   return BundleUpdater.multiply(a, b);
+// }

@@ -6,6 +6,13 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactMethod;
 
+import com.facebook.react.bridge.*;
+import java.net.URL;
+import java.security.MessageDigest;
+import android.content.Context;
+import java.io.File;
+
+
 public class BundleUpdaterModule extends BundleUpdaterSpec {
   public static final String NAME = "BundleUpdater";
 
@@ -19,11 +26,39 @@ public class BundleUpdaterModule extends BundleUpdaterSpec {
     return NAME;
   }
 
-
-  // Example method
-  // See https://reactnative.dev/docs/native-modules-android
   @ReactMethod
-  public void multiply(double a, double b, Promise promise) {
-    promise.resolve(a * b);
+  fun checkAndReplaceBundle(url: String) {
+    val context: Context = currentActivity?.applicationContext ?: return
+    Thread(
+        Runnable {
+            val script = URL(url).readBytes()
+            val scriptPath = context.filesDir.absolutePath + "/main.jsbundle"
+
+            var oldHash: String? = null
+            val oldBundle = File(scriptPath)
+            if (oldBundle.exists()) {
+                val bytes = oldBundle.readBytes()
+                oldHash = hash(bytes)
+            }
+
+            val newHash = hash(script)
+            if (newHash != oldHash) {
+                oldBundle.writeBytes(script)
+            }
+        }
+    ).start()
+  }
+
+  private fun hash(bytes: ByteArray): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    val hash = digest.digest(bytes)
+    return hash.fold("", { str, it -> str + "%02x".format(it) })
+  }
+  
+  @ReactMethod
+  fun reload() {
+    val intent = currentActivity?.packageManager?.getLaunchIntentForPackage(currentActivity?.packageName.toString())
+    currentActivity?.finishAffinity()
+    currentActivity?.startActivity(intent)
   }
 }

@@ -5,17 +5,16 @@ Handle your app updates
 ## Installation
 
 ```sh
-npm install react-native-bundle-updater
+bun install react-native-bundle-updater
 ```
 
 ## Usage
 
 ```js
-import { multiply } from 'react-native-bundle-updater';
+import something from 'react-native-bundle-updater';
 
 // ...
 
-const result = await multiply(3, 7);
 ```
 
 ## Contributing
