@@ -1,18 +1,19 @@
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
-// import { multiply } from 'react-native-bundle-updater';
+import { loadApp } from '../../src';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
-
   React.useEffect(() => {
-    // multiply(3, 7).then(setResult);
+    async function startApp() {
+      await loadApp('9980a7943e0db5892b50f6972b02b4c2a2b3');
+      console.log('loaded app');
+    }
+    startApp();
   }, []);
-
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <Text>Result KPACACA</Text>
     </View>
   );
 }

@@ -164,5 +164,8 @@
     "name": "RNBundleUpdaterSpec",
     "type": "modules",
     "jsSrcsDir": "src"
+  },
+  "dependencies": {
+    "axios": "^1.5.1"
   }
 }

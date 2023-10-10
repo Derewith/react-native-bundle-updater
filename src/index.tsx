@@ -24,6 +24,7 @@ const BundleUpdater = BundleUpdaterModule
       }
     );
 
-// export function multiply(a: number, b: number): Promise<number> {
-//   return BundleUpdater.multiply(a, b);
-// }
+export async function loadApp(apiKey: string): Promise<void> {
+  await BundleUpdater.checkAndReplaceBundle(apiKey);
+  // await BundleUpdater.reload();
+}

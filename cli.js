@@ -1,13 +1,14 @@
 const axios = require('axios');
 const fs = require('fs');
+const FormData = require('form-data');
 
 if (process.argv.length !== 4) {
-  console.error('Usage: node cli.js [path to bundle] [api url]');
+  console.error('Usage: node cli.js [path to bundle] [api key]');
   process.exit(1);
 }
 
 const bundlePath = process.argv[2];
-const apiKey = process.argv[2];
+const apiKey = process.argv[3];
 
 fs.readFile(bundlePath, (err, data) => {
   if (err) {
@@ -15,11 +16,15 @@ fs.readFile(bundlePath, (err, data) => {
     process.exit(1);
   }
 
+  const form = new FormData();
+  form.append('bundle', data, {
+    filename: bundlePath,
+    contentType: 'application/octet-stream',
+  });
+
   axios
-    .post('http://0.0.0.0:80/project/' + apiKey + '/bundle/', data, {
-      headers: {
-        'Content-Type': 'application/octet-stream',
-      },
+    .post('http://0.0.0.0/project/' + apiKey + '/bundle/', form, {
+      headers: form.getHeaders(),
     })
     .then((res) => {
       console.log(
@@ -27,5 +32,5 @@ fs.readFile(bundlePath, (err, data) => {
         res.data
       );
     })
-    .catch((err) => console.error('Error uploading bundle:', err));
+    .catch((error) => console.error('Error uploading bundle:', error));
 });

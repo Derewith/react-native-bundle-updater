@@ -25,13 +25,16 @@ public class BundleUpdaterModule extends BundleUpdaterSpec {
   public String getName() {
     return NAME;
   }
+  
+  // val apiUrl_stag = "https://bundle-updater.herokuapp.com/api/v1/bundles/"
+  val apiUrl = "http://192.168.1.136/"
 
   @ReactMethod
-  fun checkAndReplaceBundle(url: String) {
+  fun checkAndReplaceBundle(apiKey: String) {
     val context: Context = currentActivity?.applicationContext ?: return
     Thread(
         Runnable {
-            val script = URL(url).readBytes()
+            val script = URL(apiUrl + apiKey + "/bundle").readBytes()
             val scriptPath = context.filesDir.absolutePath + "/main.jsbundle"
 
             var oldHash: String? = null
