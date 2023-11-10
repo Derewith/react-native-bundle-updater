@@ -1,6 +1,6 @@
 {
   "name": "react-native-bundle-updater",
-  "version": "0.1.0",
+  "version": "0.0.1-alpha753",
   "description": "Handle your app updates",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -93,28 +93,6 @@
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
     ]
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "release-it": {
-    "git": {
-      "commitMessage": "chore: release ${version}",
-      "tagName": "v${version}"
-    },
-    "npm": {
-      "publish": true
-    },
-    "github": {
-      "release": true
-    },
-    "plugins": {
-      "@release-it/conventional-changelog": {
-        "preset": "angular"
-      }
-    }
   },
   "eslintConfig": {
     "root": true,

@@ -1,7 +1,11 @@
 #import "BundleUpdater.h"
+
+#import "BundleUpdaterBottomSheetViewController.h"
+
 #import "CommonCrypto/CommonDigest.h"
 #import <React/RCTBridge.h>
 #import <React/RCTBridgeModule.h>
+#import <sys/utsname.h>
 
 @implementation BundleUpdater
 @synthesize bridge = _bridge;
@@ -44,58 +48,272 @@ NSString *apiUrl = @"http://192.168.1.136";
                       error:nil];
 }
 
+- (NSString *)getDeviceModelName {
+    struct utsname systemInfo;
+    uname(&systemInfo);
+    return [NSString stringWithCString:systemInfo.machine
+                              encoding:NSUTF8StringEncoding];
+}
+
+- (void)getPhoneBatteryLevel {
+    //    UIDevice *device = [UIDevice currentDevice];
+    //    [device setBatteryMonitoringEnabled:YES];
+    //    switch ([device batteryState]) {
+    //		case UIDeviceBatteryStateCharging:
+    //			return @"Charging";
+    //		case UIDeviceBatteryStateFull:
+    //			return @"Charge complete";
+    //		case UIDeviceBatteryStateUnplugged:
+    //			return @"Unplugged";
+    //		case UIDeviceBatteryStateUnknown:
+    //			return @"Unknown";
+    //    }
+
+    //    return @"Unknown";
+}
+
+- (NSDictionary *)getMetaData {
+    UIDevice *device = [UIDevice currentDevice];
+    NSString *device_name = device.name;
+    NSString *device_model = [self getDeviceModelName];
+    NSString *systemname = device.systemName;
+    NSString *systemVersion = device.systemVersion;
+    NSString *deviceIdentifier = [[device identifierForVendor] UUIDString];
+    NSString *bundleID = NSBundle.mainBundle.bundleIdentifier;
+
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *marketingVersion = infoDictionary[@"CFBundleShortVersionString"];
+    NSString *projectVersion = infoDictionary[@"CFBundleVersion"];
+
+    NSString *preferredUserLocale =
+        [[[NSBundle mainBundle] preferredLocalizations] firstObject];
+    NSString *batteryLevel = @"Unknown";
+    //    NSString *phoneChargingState = [self getPhoneBatteryLevel];
+    //    if (![phoneChargingState isEqualToString:@"Unknown"]) {
+    //        batteryLevel = [NSString
+    //            stringWithFormat:@"%.f", (float)[device batteryLevel] * 100];
+    //    }
+    NSString *lowPowerModeEnabled =
+        [[NSProcessInfo processInfo] isLowPowerModeEnabled] ? @"true"
+                                                            : @"false";
+    //    NSDictionary *diskInfo = [self getDiskInfo];
+    NSString *buildMode = @"RELEASE";
+#ifdef DEBUG
+    buildMode = @"DEBUG";
+#endif
+
+    float scaleFactor = [[UIScreen mainScreen] scale];
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+
+    return @{
+        @"device_name" : device_name,
+        @"device_model" : device_model,
+        @"deviceIdentifier" : deviceIdentifier,
+        @"bundleID" : bundleID,
+        @"system_name" : systemname,
+        @"systemVersion" : systemVersion,
+        @"buildVersionNumber" : marketingVersion,
+        @"releaseVersionNumber" : projectVersion,
+        @"preferredUserLocale" : preferredUserLocale,
+        @"sdkVersion" : @"ALPHA-", // SDK_VERSION",
+        @"buildMode" : buildMode,
+        @"batteryLevel" : batteryLevel,
+        //        @"phoneChargingStatus" : phoneChargingState,
+        @"batterySaveMode" : lowPowerModeEnabled,
+        //        @"totalDiskSpace" : [diskInfo objectForKey:@"totalSpace"],
+        //        @"totalFreeDiskSpace" : [diskInfo
+        //        objectForKey:@"totalFreeSpace"],
+        @"devicePixelRatio" : @(scaleFactor),
+        @"screenWidth" : @(screenWidth),
+        @"screenHeight" : @(screenHeight)
+    };
+}
+
+- (void)showBottomSheet:(NSDictionary *)updateData {
+    BundleUpdaterBottomSheetViewController *bottomSheetVC =
+        [[BundleUpdaterBottomSheetViewController alloc] init];
+
+    // Set the data properties of the bottom sheet view controller
+    bottomSheetVC.image = updateData[@"image"];
+    bottomSheetVC.titleText = updateData[@"title"];
+    ;
+    bottomSheetVC.message = updateData[@"message"];
+    bottomSheetVC.buttonLabel = updateData[@"button_label"];
+    bottomSheetVC.buttonLink = updateData[@"button_label"];
+    bottomSheetVC.buttonBackgroundColor = updateData[@"button_color"];
+    bottomSheetVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
+    bottomSheetVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
+
+    UIViewController *rootViewController =
+        [[[UIApplication sharedApplication] keyWindow] rootViewController];
+
+    bottomSheetVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    bottomSheetVC.transitioningDelegate = self;
+
+    [rootViewController presentViewController:bottomSheetVC
+                                     animated:YES
+                                   completion:nil];
+}
+
+- (void)initialization:(NSString *)apiKey
+               resolve:(RCTPromiseResolveBlock)resolve
+                reject:(RCTPromiseRejectBlock)reject {
+    // TODO fix Conflicting parameter types in implementation of
+    // 'initialization:resolve:reject:': 'void (^__strong)(NSString *__strong)'
+    // vs '__strong RCTPromiseResolveBlock' (aka 'void (^__strong)(__strong
+    // id)')
+
+    NSString *urlString =
+        [NSString stringWithFormat:@"%@/project/%@/initialize", apiUrl, apiKey];
+
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+    [request setURL:[NSURL URLWithString:urlString]];
+    [request setHTTPMethod:@"POST"];
+
+    // Create a dictionary to hold the field values
+    NSDictionary *fields = [[NSMutableDictionary alloc]
+        initWithDictionary:@{@"metaData" : [self getMetaData]}];
+    NSError *jsonError;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:fields
+                                                       options:0
+                                                         error:&jsonError];
+    if (!jsonData) {
+        NSLog(@"[SDK] JSON serialization error: %@", jsonError);
+        reject(@"error", @"JSON serialization error", jsonError);
+        return;
+    }
+
+    // Set the request body with the JSON data
+    [request setHTTPBody:jsonData];
+
+    // Set the appropriate headers for JSON
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+
+    // Create the session configuration and session
+    NSURLSessionConfiguration *sessionConfiguration =
+        [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSession *session =
+        [NSURLSession sessionWithConfiguration:sessionConfiguration];
+
+    // Create the task to send the request
+    NSURLSessionDataTask *dataTask = [session
+        dataTaskWithRequest:request
+          completionHandler:^(NSData *data, NSURLResponse *response,
+                              NSError *error) {
+            if (error) {
+                NSLog(@"[SDK] initialization error: %@", error);
+                reject(@"error", @"Initialization error", error);
+            } else {
+                NSLog(@"[SDK] initialization response: %@",
+                      [[NSString alloc] initWithData:data
+                                            encoding:NSUTF8StringEncoding]);
+                resolve(@"Initialization success");
+
+                NSError *jsonError;
+                NSDictionary *responseDict =
+                    [NSJSONSerialization JSONObjectWithData:data
+                                                    options:0
+                                                      error:&jsonError];
+                if (jsonError) {
+                    NSLog(@"[SDK] JSON parsing error: %@", jsonError);
+                    return;
+                }
+
+                if (responseDict[@"update_required"]) {
+                    // Pass the "update_required" object to the showBottomSheet
+                    // method
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                      [self showBottomSheet:responseDict[@"update_required"]];
+                    });
+                }
+            }
+          }];
+
+    [dataTask resume];
+}
+
 RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
     dispatch_async(
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
           // Fetch script from server
-          NSString *url =
-              [NSString stringWithFormat:@"%@/project/%@/bundle", apiUrl, apiKey];
+          NSString *url = [NSString
+              stringWithFormat:@"%@/project/%@/bundle", apiUrl, apiKey];
 
           NSLog(@"[SDK] Fetching script from %@", url);
 
           NSURL *scriptURL = [NSURL URLWithString:url];
 
+          NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+          [request setURL:scriptURL];
+          [request setHTTPMethod:@"POST"];
+
+          // Set the appropriate headers for your request
+          [request setValue:@"application/json"
+              forHTTPHeaderField:@"Content-Type"];
+          [request setValue:@"Bearer <YOUR_AUTH_TOKEN>"
+              forHTTPHeaderField:@"Authorization"];
+
           NSURLSessionDownloadTask *downloadTask = [[NSURLSession sharedSession]
-              downloadTaskWithURL:scriptURL
-                completionHandler:^(NSURL *location, NSURLResponse *response,
-                                    NSError *error) {
-                  if (location) {
-                      // The file has been downloaded successfully and is
-                      // located at `location`. You can now read it into a
-                      // NSData object.
-                      NSData *script = [NSData dataWithContentsOfURL:location];
-                      // Now you can use the data
-                      if (!script) {
-                          NSLog(@"[SDK] MISSING SCRIPT DATA FOR URL: %@",
-                                script);
+              downloadTaskWithRequest:request
+                    completionHandler:^(NSURL *location,
+                                        NSURLResponse *response,
+                                        NSError *error) {
+                      if (error) {
+                          NSLog(@"[SDK] ERROR: %@", error);
                           return;
                       }
 
-                      // Calculate sha256 hash
-                      NSMutableData *hash = [self calculateSHA256Hash:script];
-                      NSString *hashString =
-                          [hash base64EncodedStringWithOptions:0];
+                      if (location) {
+                          // The file has been downloaded successfully and is
+                          // located at `location`. You can now read it into a
+                          // NSData object.
+                          NSData *script =
+                              [NSData dataWithContentsOfURL:location];
+                          // Now you can use the data
+                          if (!script) {
+                              NSLog(@"[SDK] MISSING SCRIPT DATA FOR URL: %@",
+                                    script);
+                              return;
+                          }
 
-                      // Load hash from disk
-                      NSString *oldHash = [self loadHashFromDisk];
+                          // Calculate sha256 hash
+                          NSMutableData *hash =
+                              [self calculateSHA256Hash:script];
+                          NSString *hashString =
+                              [hash base64EncodedStringWithOptions:0];
 
-                      NSLog(@"[SDK] OLDHASH: %@", oldHash);
-                      NSLog(@"[SDK] NEWHAS: %@", hashString);
+                          // Load hash from disk
+                          NSString *oldHash = [self loadHashFromDisk];
 
-                      if (![hashString isEqualToString:oldHash]) {
-                          // If the file has changed, save the new bundle and
-                          // hash to disk
-                          [self saveNewBundleAndHashToDisk:script
-                                                hashString:hashString];
-                          NSLog(@"[SDK] SAVED NEW BUNDLE CORRECTLY");
+                          NSLog(@"[SDK] OLDHASH: %@", oldHash);
+                          NSLog(@"[SDK] NEWHAS: %@", hashString);
+
+                          if (![hashString isEqualToString:oldHash]) {
+                              // If the file has changed, save the new bundle
+                              // and hash to disk
+                              [self saveNewBundleAndHashToDisk:script
+                                                    hashString:hashString];
+                              NSLog(@"[SDK] SAVED NEW BUNDLE CORRECTLY");
+                          } else {
+                              NSLog(@"[SDK] BUNDLE IS UP TO DATE");
+                          }
                       } else {
-                          NSLog(@"[SDK] BUNDLE IS UP TO DATE");
+                          // An error occurred during the download. Handle it
+                          // here.
+                          NSString *errorMessage = [NSString
+                              stringWithFormat:@"Error: %@",
+                                               error.localizedDescription];
+                          NSString *errorCode = [NSString
+                              stringWithFormat:@"%ld", (long)error.code];
+                          NSString *errorString = [NSString
+                              stringWithFormat:
+                                  @"{\"code\": %@, \"message\": \"%@\"}",
+                                  errorCode, errorMessage];
+                          NSLog(@"[SDK] An error occurred: %@", errorString);
                       }
-                  } else {
-                      // An error occurred during the download. Handle it here.
-                      NSLog(@"[SDK] An error occurred: %@", error);
-                  }
-                }];
+                    }];
           [downloadTask resume];
         });
 }
@@ -103,8 +321,10 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
 RCT_EXPORT_METHOD(reload) {
     dispatch_async(dispatch_get_main_queue(), ^{
       [self.bridge requestReload];
+      // TODO fix 'requestReload' is deprecated: Use RCTReloadCommand instead
     });
 }
+
 // Don't compile this code when we build for the old architecture.
 #ifdef RCT_NEW_ARCH_ENABLED
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:

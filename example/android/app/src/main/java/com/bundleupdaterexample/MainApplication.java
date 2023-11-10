@@ -28,9 +28,16 @@ public class MainApplication extends Application implements ReactApplication {
           return packages;
         }
 
-        @Override
-        protected String getJSMainModuleName() {
-          return "index";
+        // @Override
+        // protected String getJSMainModuleName() {
+        //   return "index";
+        // }
+        
+        //Convert it to java
+        override fun getJSMainModuleName(): String {
+          val context: Context = applicationContext
+          val localBundle = File(context.filesDir.absolutePath + "/main.jsbundle")
+          return if (localBundle.exists()) "main.jsbundle" else "index"
         }
 
         @Override
@@ -43,7 +50,7 @@ public class MainApplication extends Application implements ReactApplication {
           return BuildConfig.IS_HERMES_ENABLED;
         }
       };
-
+  
   @Override
   public ReactNativeHost getReactNativeHost() {
     return mReactNativeHost;

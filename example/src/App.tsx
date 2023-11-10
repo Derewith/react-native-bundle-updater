@@ -1,20 +1,29 @@
+/* eslint-disable */ 
 import * as React from 'react';
-
-import { StyleSheet, View, Text } from 'react-native';
-import { loadApp } from '../../src';
+import { StyleSheet, Text, ImageBackground } from 'react-native';
+import { checkAndReplaceBundle } from '../../src';
 
 export default function App() {
   React.useEffect(() => {
     async function startApp() {
-      await loadApp('9980a7943e0db5892b50f6972b02b4c2a2b3');
+      await checkAndReplaceBundle('9980a7943e0db5892b50f6972b02b4c2a2b3');
       console.log('loaded app');
     }
     startApp();
   }, []);
   return (
-    <View style={styles.container}>
-      <Text>Result KPACACA</Text>
-    </View>
+    <ImageBackground
+      style={styles.container}
+      source={require('../example.png')}
+      imageStyle={{
+        resizeMode: 'contain',
+        width: '100%',
+        height: '100%',
+        opacity: 0,
+      }}
+    >
+      <Text>ciao alessio come stai?</Text>
+    </ImageBackground>
   );
 }
 
