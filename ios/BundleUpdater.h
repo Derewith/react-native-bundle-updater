@@ -10,6 +10,8 @@
     - (void)initialization:(NSString *)apiKey
                 resolve:(void (^)(NSString *))resolve
                     reject:(void (^)(NSString *, NSString *, NSError *))reject;
+    - (NSURL *)initializeBundle:(RCTBridge *)bridge;
+    + (instancetype)sharedInstance;
 #endif
 
 @end
