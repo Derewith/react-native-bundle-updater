@@ -6,13 +6,28 @@
 #import <React/RCTBridge.h>
 #import <React/RCTBridgeModule.h>
 #import <sys/utsname.h>
+#import <React/RCTBundleURLProvider.h>
 
 @implementation BundleUpdater
 @synthesize bridge = _bridge;
 
 RCT_EXPORT_MODULE()
 
-NSString *apiUrl = @"http://192.168.1.136";
+NSString *apiUrl = @"http://192.168.0.103:3003";
+
++ (instancetype)sharedInstance{
+    static BundleUpdater *sharedInstance = nil;
+    static dispatch_once_t once_token;
+    dispatch_once(&once_token, ^{
+        sharedInstance = [[BundleUpdater alloc] init];
+    });
+    return sharedInstance;
+}
+
+- (instancetype)init{
+    self = [super init];
+    return self;
+}
 
 - (NSMutableData *)calculateSHA256Hash:(NSData *)script {
     NSMutableData *hash =
@@ -206,11 +221,15 @@ NSString *apiUrl = @"http://192.168.1.136";
                 NSLog(@"[SDK] initialization error: %@", error);
                 reject(@"error", @"Initialization error", error);
             } else {
+                NSHTTPURLResponse *httpResponse =
+                    (NSHTTPURLResponse *)response;
                 NSLog(@"[SDK] initialization response: %@",
                       [[NSString alloc] initWithData:data
                                             encoding:NSUTF8StringEncoding]);
+//                if(httpResponse.statusCode == 404){
+//                    
+//                }
                 resolve(@"Initialization success");
-
                 NSError *jsonError;
                 NSDictionary *responseDict =
                     [NSJSONSerialization JSONObjectWithData:data
@@ -232,6 +251,31 @@ NSString *apiUrl = @"http://192.168.1.136";
           }];
 
     [dataTask resume];
+}
+
+- (NSURL *)initializeBundle:(RCTBridge *)bridge {
+  #if DEBUG
+      return [[RCTBundleURLProvider sharedSettings]
+          jsBundleURLForBundleRoot:@"index"];
+  #else
+      // Check if there is the main.jsbundle file in the Document directory
+      NSString *documentDirectoryJSBundleFilePath =
+          [[NSSearchPathForDirectoriesInDomains(
+              NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
+              stringByAppendingPathComponent:@"main.jsbundle"];
+      BOOL isDir;
+      BOOL fileExistsAtPath = [[NSFileManager defaultManager]
+          fileExistsAtPath:documentDirectoryJSBundleFilePath
+               isDirectory:&isDir];
+      if (!fileExistsAtPath) {
+          NSLog(@"[SDK]Missing file so picking default");
+          return [[NSBundle mainBundle] URLForResource:@"main"
+                                         withExtension:@"jsbundle"];
+      } else {
+          NSLog(@"[SDK]GOT file %@", documentDirectoryJSBundleFilePath);
+          return [NSURL fileURLWithPath:documentDirectoryJSBundleFilePath];
+      }
+  #endif
 }
 
 RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
