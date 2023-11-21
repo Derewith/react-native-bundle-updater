@@ -2,7 +2,7 @@
 #import "BundleUpdaterButton.h"
 #import "UIColor+HexString.h"
 #import <SDWebImage/UIImageView+WebCache.h>
-
+#import "BundleUpdater.h"
 @implementation BundleUpdaterBottomSheetViewController
 
 - (UIFont *)customFontWithSize:(CGFloat)size {
@@ -40,6 +40,12 @@
                                            options:@{}
                                  completionHandler:nil];
     }
+}
+
+- (void)reloadApp:(UIButton *)sender {
+    [[BundleUpdater sharedInstance] reload];
+    // hide the modal
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)viewDidLoad {
@@ -158,7 +164,7 @@
                            forState:UIControlStateNormal];
     [self.button setCenter:CGPointMake(screenWidth / 2, self.button.center.y)];
     [self.button addTarget:self
-                    action:@selector(visitwebsitebuttonTapped:)
+                    action:@selector(reloadApp:)
           forControlEvents:UIControlEventTouchUpInside];
 
     // footerLogo

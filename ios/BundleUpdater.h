@@ -7,11 +7,12 @@
     @interface BundleUpdater : NSObject <RCTBridgeModule, UIViewControllerTransitioningDelegate>
     @property (nonatomic, weak) RCTBridge *bridge;
 
+    + (instancetype)sharedInstance;
     - (void)initialization:(NSString *)apiKey
                 resolve:(void (^)(NSString *))resolve
                     reject:(void (^)(NSString *, NSString *, NSError *))reject;
-    - (NSURL *)initializeBundle:(RCTBridge *)bridge;
-    + (instancetype)sharedInstance;
+    - (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key;
+    - (void)reload;
 #endif
 
 @end
