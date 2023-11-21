@@ -222,7 +222,18 @@ NSDictionary *update_config = @{};
         [NSURLSessionConfiguration defaultSessionConfiguration];
     NSURLSession *session =
         [NSURLSession sessionWithConfiguration:sessionConfiguration];
-
+//     MARK: - TO TEST THE MODAL
+//     dispatch_async(dispatch_get_main_queue(), ^{
+//        [self showBottomSheet:@{
+//            @"button_color": @"#FF1542",
+//            @"button_label": @"Aggiorna ora",
+//            @"button_link" : @"https://xylem.com",
+//            @"image" : @"https://i.ibb.co/ngTj6wc/xylem-italia-logo.jpg",
+//            @"message": @"Per continuare a utilizzare Xylem X, aggiorna per le ultime funzionalita e correzioni di bug.",
+//            @"privacy": @"https://develondigital.com",
+//            @"title": @"Aggiornamento disponibile!"
+//       }];
+//    });
     // Create the task to send the request
     NSURLSessionDataTask *dataTask = [session
         dataTaskWithRequest:request

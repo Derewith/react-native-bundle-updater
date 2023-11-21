@@ -78,7 +78,7 @@
     // Create the background view
     self.backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
     self.backgroundView.backgroundColor = [UIColor blackColor];
-    self.backgroundView.alpha = 0.5;
+    self.backgroundView.alpha = 0;
     [self.view addSubview:self.backgroundView];
 
     // Create the modal view
@@ -88,16 +88,21 @@
     self.modalView = [[UIView alloc]
         initWithFrame:CGRectMake(0, modalY, self.view.bounds.size.width,
                                  modalHeight)];
+    
     self.modalView.backgroundColor = [UIColor whiteColor];
+    self.modalView.layer.borderWidth = 0.1f;
+    self.modalView.layer.borderColor = [UIColor blackColor].CGColor;
+    self.modalView.layer.cornerRadius = 20;
 
-    UIBezierPath *maskPath = [UIBezierPath
-        bezierPathWithRoundedRect:self.modalView.bounds
-                byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight)
-                      cornerRadii:CGSizeMake(20.0, 20.0)];
-    CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
-    maskLayer.frame = self.modalView.bounds;
-    maskLayer.path = maskPath.CGPath;
-    self.modalView.layer.mask = maskLayer;
+
+//    UIBezierPath *maskPath = [UIBezierPath
+//        bezierPathWithRoundedRect:self.modalView.bounds
+//                byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight)
+//                      cornerRadii:CGSizeMake(20.0, 20.0)];
+//    CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
+//    maskLayer.frame = self.modalView.bounds;
+//    maskLayer.path = maskPath.CGPath;
+//    self.modalView.layer.mask = maskLayer;
 
     [self.view addSubview:self.modalView];
 
@@ -232,6 +237,12 @@
     // [self.view setNeedsUpdateConstraints];
 }
 
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    [UIView animateWithDuration:0.3 animations:^{
+        self.backgroundView.alpha = 0.5;
+    }];
+}
 - (void)updateViewConstraints {
     [super updateViewConstraints];
 
