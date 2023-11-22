@@ -1,7 +1,7 @@
 #import <UIKit/UIKit.h>
 #import "BundleUpdaterButton.h"
 
-@interface BundleUpdaterBottomSheetViewController : UIViewController
+@interface BundleUpdaterBottomSheetViewController : UIViewController <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) NSString *image;
 @property (nonatomic, strong) NSString *titleText;
