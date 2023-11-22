@@ -310,13 +310,6 @@ RCT_EXPORT_MODULE()
                         }
                     }
                 }
-                // TODO - for more apps installed this is no good
-                // at first make a bundle id as default for the project and check if there are updates
-                // if no bundle saved on user defaults save the actual retrieved
-                if([savedBundle isEqualToString:@""]){
-                    self->_bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
-                    [[NSUserDefaults standardUserDefaults] setObject:self->_bundle_id_from_api forKey:@"bundleId"];
-                }
             }
           }];
 
