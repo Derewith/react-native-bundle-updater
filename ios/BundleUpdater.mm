@@ -7,13 +7,15 @@
 #import <React/RCTBridgeModule.h>
 #import <sys/utsname.h>
 #import <React/RCTBundleURLProvider.h>
+#import <React/RCTReloadCommand.h>
 
 @implementation BundleUpdater
 @synthesize bridge = _bridge;
 
 RCT_EXPORT_MODULE()
 
-NSString *apiUrl = @"http://192.168.0.103:3003";
+NSString *apiUrl = @"http://192.168.10.37:3003";
+NSDictionary *update_config = @{};
 
 + (instancetype)sharedInstance{
     static BundleUpdater *sharedInstance = nil;
@@ -49,6 +51,9 @@ NSString *apiUrl = @"http://192.168.0.103:3003";
 
 - (void)saveNewBundleAndHashToDisk:(NSData *)script
                         hashString:(NSString *)hashString {
+    // Save the bundle on a folder with the sdk key as path
+//    NSString *folder = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+//    NSFileManager *manager = [NSFileManager defaultManager];
     NSString *scriptPath = [[NSSearchPathForDirectoriesInDomains(
         NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
         stringByAppendingPathComponent:@"main.jsbundle"];
@@ -179,7 +184,8 @@ NSString *apiUrl = @"http://192.168.0.103:3003";
     // 'initialization:resolve:reject:': 'void (^__strong)(NSString *__strong)'
     // vs '__strong RCTPromiseResolveBlock' (aka 'void (^__strong)(__strong
     // id)')
-
+    NSString *savedBundle = [[NSUserDefaults standardUserDefaults]
+        stringForKey:@"bundleId"];
     NSString *urlString =
         [NSString stringWithFormat:@"%@/project/%@/initialize", apiUrl, apiKey];
 
@@ -188,10 +194,15 @@ NSString *apiUrl = @"http://192.168.0.103:3003";
     [request setHTTPMethod:@"POST"];
 
     // Create a dictionary to hold the field values
-    NSDictionary *fields = [[NSMutableDictionary alloc]
-        initWithDictionary:@{@"metaData" : [self getMetaData]}];
+//    NSDictionary *fields = [[NSMutableDictionary alloc]
+//        initWithDictionary:@{@"metaData" : [self getMetaData]}];
+    NSDictionary *body = [[NSMutableDictionary alloc]
+        initWithDictionary:@{
+            @"metaData" : [self getMetaData],
+            @"bundleId" : savedBundle ? savedBundle : @""
+        }];
     NSError *jsonError;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:fields
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:body
                                                        options:0
                                                          error:&jsonError];
     if (!jsonData) {
@@ -211,7 +222,18 @@ NSString *apiUrl = @"http://192.168.0.103:3003";
         [NSURLSessionConfiguration defaultSessionConfiguration];
     NSURLSession *session =
         [NSURLSession sessionWithConfiguration:sessionConfiguration];
-
+//     MARK: - TO TEST THE MODAL
+//     dispatch_async(dispatch_get_main_queue(), ^{
+//        [self showBottomSheet:@{
+//            @"button_color": @"#FF1542",
+//            @"button_label": @"Aggiorna ora",
+//            @"button_link" : @"https://xylem.com",
+//            @"image" : @"https://i.ibb.co/ngTj6wc/xylem-italia-logo.jpg",
+//            @"message": @"Per continuare a utilizzare Xylem X, aggiorna per le ultime funzionalita e correzioni di bug.",
+//            @"privacy": @"https://develondigital.com",
+//            @"title": @"Aggiornamento disponibile!"
+//       }];
+//    });
     // Create the task to send the request
     NSURLSessionDataTask *dataTask = [session
         dataTaskWithRequest:request
@@ -221,8 +243,8 @@ NSString *apiUrl = @"http://192.168.0.103:3003";
                 NSLog(@"[SDK] initialization error: %@", error);
                 reject(@"error", @"Initialization error", error);
             } else {
-                NSHTTPURLResponse *httpResponse =
-                    (NSHTTPURLResponse *)response;
+//                NSHTTPURLResponse *httpResponse =
+//                    (NSHTTPURLResponse *)response;
                 NSLog(@"[SDK] initialization response: %@",
                       [[NSString alloc] initWithData:data
                                             encoding:NSUTF8StringEncoding]);
@@ -239,13 +261,20 @@ NSString *apiUrl = @"http://192.168.0.103:3003";
                     NSLog(@"[SDK] JSON parsing error: %@", jsonError);
                     return;
                 }
-
-                if (responseDict[@"update_required"]) {
-                    // Pass the "update_required" object to the showBottomSheet
-                    // method
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                      [self showBottomSheet:responseDict[@"update_required"]];
-                    });
+                NSLog(@"%@", responseDict.description);
+                @try {
+                    if ([responseDict valueForKey:@"update_required"]) {
+                        // Pass the "update_required" object to the showBottomSheet
+                        // method
+                        update_config = [responseDict valueForKey:@"update_required"];
+                        NSString *bundle_id = [responseDict valueForKey:@"bundleId"];
+                        [[NSUserDefaults standardUserDefaults] setObject:bundle_id forKey:@"bundleId"];
+    //                    dispatch_async(dispatch_get_main_queue(), ^{
+    //                      [self showBottomSheet:responseDict[@"update_required"]];
+    //                    });
+                    }
+                } @catch (NSException *exception) {
+                    NSLog(@"Update not required");
                 }
             }
           }];
@@ -253,11 +282,29 @@ NSString *apiUrl = @"http://192.168.0.103:3003";
     [dataTask resume];
 }
 
-- (NSURL *)initializeBundle:(RCTBridge *)bridge {
+- (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key{
   #if DEBUG
       return [[RCTBundleURLProvider sharedSettings]
           jsBundleURLForBundleRoot:@"index"];
   #else
+      //verify if the key is the same as the previous one
+      NSString *oldKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
+      if(!oldKey || ![oldKey isEqualToString:key]){
+        NSLog(@"detected api key change");
+        //if not, delete the old bundle
+        NSString *documentDirectoryJSBundleFilePath =
+            [[NSSearchPathForDirectoriesInDomains(
+                NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
+                stringByAppendingPathComponent:@"main.jsbundle"];
+        BOOL isDir;
+        BOOL fileExistsAtPath = [[NSFileManager defaultManager]
+            fileExistsAtPath:documentDirectoryJSBundleFilePath
+                 isDirectory:&isDir];
+        if (fileExistsAtPath) {
+            [[NSFileManager defaultManager] removeItemAtPath:documentDirectoryJSBundleFilePath error:nil];
+        }
+        [[NSUserDefaults standardUserDefaults] setObject:key forKey:@"bundleKey"];
+      }
       // Check if there is the main.jsbundle file in the Document directory
       NSString *documentDirectoryJSBundleFilePath =
           [[NSSearchPathForDirectoriesInDomains(
@@ -340,6 +387,9 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
                               [self saveNewBundleAndHashToDisk:script
                                                     hashString:hashString];
                               NSLog(@"[SDK] SAVED NEW BUNDLE CORRECTLY");
+                              dispatch_async(dispatch_get_main_queue(), ^{
+                                 [self showBottomSheet:update_config];
+                              });
                           } else {
                               NSLog(@"[SDK] BUNDLE IS UP TO DATE");
                           }
@@ -364,8 +414,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
 
 RCT_EXPORT_METHOD(reload) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      [self.bridge requestReload];
-      // TODO fix 'requestReload' is deprecated: Use RCTReloadCommand instead
+        RCTTriggerReloadCommandListeners(@"bundle changed");
     });
 }
 
