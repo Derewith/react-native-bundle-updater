@@ -26,8 +26,8 @@ public class BundleUpdaterModule extends BundleUpdaterSpec {
     return NAME;
   }
   
-  // val apiUrl_stag = "https://bundle-updater.herokuapp.com/api/v1/bundles/"
-  val apiUrl = "http://192.168.1.136/"
+  val apiUrl = "http://192.168.1.136:3003/"
+  val update_config = {}
 
   @ReactMethod
   fun checkAndReplaceBundle(apiKey: String) {
@@ -50,6 +50,14 @@ public class BundleUpdaterModule extends BundleUpdaterSpec {
             }
         }
     ).start()
+  }
+
+  @ReactMethod
+  fun initialization(apiKey: String) {
+  }
+
+  @ReactMethod
+  fun initializeBundle(key: String) {
   }
 
   private fun hash(bytes: ByteArray): String {

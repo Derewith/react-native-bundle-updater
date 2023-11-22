@@ -5,28 +5,28 @@
 #import "CommonCrypto/CommonDigest.h"
 #import <React/RCTBridge.h>
 #import <React/RCTBridgeModule.h>
-#import <sys/utsname.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTReloadCommand.h>
+#import <sys/utsname.h>
 
 @implementation BundleUpdater
 @synthesize bridge = _bridge;
 
 RCT_EXPORT_MODULE()
 
-NSString *apiUrl = @"http://192.168.10.37:3003";
+NSString *apiUrl = @"http://192.168.1.136";
 NSDictionary *update_config = @{};
 
-+ (instancetype)sharedInstance{
++ (instancetype)sharedInstance {
     static BundleUpdater *sharedInstance = nil;
     static dispatch_once_t once_token;
     dispatch_once(&once_token, ^{
-        sharedInstance = [[BundleUpdater alloc] init];
+      sharedInstance = [[BundleUpdater alloc] init];
     });
     return sharedInstance;
 }
 
-- (instancetype)init{
+- (instancetype)init {
     self = [super init];
     return self;
 }
@@ -52,8 +52,10 @@ NSDictionary *update_config = @{};
 - (void)saveNewBundleAndHashToDisk:(NSData *)script
                         hashString:(NSString *)hashString {
     // Save the bundle on a folder with the sdk key as path
-//    NSString *folder = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-//    NSFileManager *manager = [NSFileManager defaultManager];
+    //    NSString *folder =
+    //    [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
+    //    NSUserDomainMask, YES) firstObject]; NSFileManager *manager =
+    //    [NSFileManager defaultManager];
     NSString *scriptPath = [[NSSearchPathForDirectoriesInDomains(
         NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
         stringByAppendingPathComponent:@"main.jsbundle"];
@@ -180,12 +182,9 @@ NSDictionary *update_config = @{};
 - (void)initialization:(NSString *)apiKey
                resolve:(RCTPromiseResolveBlock)resolve
                 reject:(RCTPromiseRejectBlock)reject {
-    // TODO fix Conflicting parameter types in implementation of
-    // 'initialization:resolve:reject:': 'void (^__strong)(NSString *__strong)'
-    // vs '__strong RCTPromiseResolveBlock' (aka 'void (^__strong)(__strong
-    // id)')
-    NSString *savedBundle = [[NSUserDefaults standardUserDefaults]
-        stringForKey:@"bundleId"];
+
+    NSString *savedBundle =
+        [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleId"];
     NSString *urlString =
         [NSString stringWithFormat:@"%@/project/%@/initialize", apiUrl, apiKey];
 
@@ -194,18 +193,22 @@ NSDictionary *update_config = @{};
     [request setHTTPMethod:@"POST"];
 
     // Create a dictionary to hold the field values
-//    NSDictionary *fields = [[NSMutableDictionary alloc]
-//        initWithDictionary:@{@"metaData" : [self getMetaData]}];
-    NSDictionary *body = [[NSMutableDictionary alloc]
-        initWithDictionary:@{
-            @"metaData" : [self getMetaData],
-            @"bundleId" : savedBundle ? savedBundle : @""
-        }];
+    //    NSDictionary *fields = [[NSMutableDictionary alloc]
+    //        initWithDictionary:@{@"metaData" : [self getMetaData]}];
+    
+    NSDictionary *body = [[NSMutableDictionary alloc] initWithDictionary:@{
+        @"metaData" : [self getMetaData],
+        @"bundleId" : savedBundle ? savedBundle : @""
+    }];
     NSError *jsonError;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:body
                                                        options:0
                                                          error:&jsonError];
     if (!jsonData) {
+		// TODO fix Conflicting parameter types in implementation of
+		// 'initialization:resolve:reject:': 'void (^__strong)(NSString *__strong)'
+		// vs '__strong RCTPromiseResolveBlock' (aka 'void (^__strong)(__strong
+		// id)')
         NSLog(@"[SDK] JSON serialization error: %@", jsonError);
         reject(@"error", @"JSON serialization error", jsonError);
         return;
@@ -222,18 +225,19 @@ NSDictionary *update_config = @{};
         [NSURLSessionConfiguration defaultSessionConfiguration];
     NSURLSession *session =
         [NSURLSession sessionWithConfiguration:sessionConfiguration];
-//     MARK: - TO TEST THE MODAL
-//     dispatch_async(dispatch_get_main_queue(), ^{
-//        [self showBottomSheet:@{
-//            @"button_color": @"#FF1542",
-//            @"button_label": @"Aggiorna ora",
-//            @"button_link" : @"https://xylem.com",
-//            @"image" : @"https://i.ibb.co/ngTj6wc/xylem-italia-logo.jpg",
-//            @"message": @"Per continuare a utilizzare Xylem X, aggiorna per le ultime funzionalita e correzioni di bug.",
-//            @"privacy": @"https://develondigital.com",
-//            @"title": @"Aggiornamento disponibile!"
-//       }];
-//    });
+    //     MARK: - TO TEST THE MODAL
+    //     dispatch_async(dispatch_get_main_queue(), ^{
+    //        [self showBottomSheet:@{
+    //            @"button_color": @"#FF1542",
+    //            @"button_label": @"Aggiorna ora",
+    //            @"button_link" : @"https://xylem.com",
+    //            @"image" : @"https://i.ibb.co/ngTj6wc/xylem-italia-logo.jpg",
+    //            @"message": @"Per continuare a utilizzare Xylem X, aggiorna
+    //            per le ultime funzionalita e correzioni di bug.",
+    //            @"privacy": @"https://develondigital.com",
+    //            @"title": @"Aggiornamento disponibile!"
+    //       }];
+    //    });
     // Create the task to send the request
     NSURLSessionDataTask *dataTask = [session
         dataTaskWithRequest:request
@@ -243,14 +247,9 @@ NSDictionary *update_config = @{};
                 NSLog(@"[SDK] initialization error: %@", error);
                 reject(@"error", @"Initialization error", error);
             } else {
-//                NSHTTPURLResponse *httpResponse =
-//                    (NSHTTPURLResponse *)response;
                 NSLog(@"[SDK] initialization response: %@",
                       [[NSString alloc] initWithData:data
                                             encoding:NSUTF8StringEncoding]);
-//                if(httpResponse.statusCode == 404){
-//                    
-//                }
                 resolve(@"Initialization success");
                 NSError *jsonError;
                 NSDictionary *responseDict =
@@ -264,14 +263,20 @@ NSDictionary *update_config = @{};
                 NSLog(@"%@", responseDict.description);
                 @try {
                     if ([responseDict valueForKey:@"update_required"]) {
-                        // Pass the "update_required" object to the showBottomSheet
-                        // method
-                        update_config = [responseDict valueForKey:@"update_required"];
-                        NSString *bundle_id = [responseDict valueForKey:@"bundleId"];
-                        [[NSUserDefaults standardUserDefaults] setObject:bundle_id forKey:@"bundleId"];
-    //                    dispatch_async(dispatch_get_main_queue(), ^{
-    //                      [self showBottomSheet:responseDict[@"update_required"]];
-    //                    });
+                        // Pass the "update_required" object to the
+                        // showBottomSheet method
+                        update_config =
+                            [responseDict valueForKey:@"update_required"];
+                        NSString *bundle_id =
+                            [responseDict valueForKey:@"bundleId"];
+                        [[NSUserDefaults standardUserDefaults]
+                            setObject:bundle_id
+                               forKey:@"bundleId"];
+                        //                    dispatch_async(dispatch_get_main_queue(),
+                        //                    ^{
+                        //                      [self
+                        //                      showBottomSheet:responseDict[@"update_required"]];
+                        //                    });
                     }
                 } @catch (NSException *exception) {
                     NSLog(@"Update not required");
@@ -282,16 +287,17 @@ NSDictionary *update_config = @{};
     [dataTask resume];
 }
 
-- (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key{
-  #if DEBUG
-      return [[RCTBundleURLProvider sharedSettings]
-          jsBundleURLForBundleRoot:@"index"];
-  #else
-      //verify if the key is the same as the previous one
-      NSString *oldKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
-      if(!oldKey || ![oldKey isEqualToString:key]){
+- (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key {
+#if DEBUG
+    return [[RCTBundleURLProvider sharedSettings]
+        jsBundleURLForBundleRoot:@"index"];
+#else
+    // verify if the key is the same as the previous one
+    NSString *oldKey =
+        [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
+    if (!oldKey || ![oldKey isEqualToString:key]) {
         NSLog(@"detected api key change");
-        //if not, delete the old bundle
+        // if not, delete the old bundle
         NSString *documentDirectoryJSBundleFilePath =
             [[NSSearchPathForDirectoriesInDomains(
                 NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
@@ -301,28 +307,31 @@ NSDictionary *update_config = @{};
             fileExistsAtPath:documentDirectoryJSBundleFilePath
                  isDirectory:&isDir];
         if (fileExistsAtPath) {
-            [[NSFileManager defaultManager] removeItemAtPath:documentDirectoryJSBundleFilePath error:nil];
+            [[NSFileManager defaultManager]
+                removeItemAtPath:documentDirectoryJSBundleFilePath
+                           error:nil];
         }
-        [[NSUserDefaults standardUserDefaults] setObject:key forKey:@"bundleKey"];
-      }
-      // Check if there is the main.jsbundle file in the Document directory
-      NSString *documentDirectoryJSBundleFilePath =
-          [[NSSearchPathForDirectoriesInDomains(
-              NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
-              stringByAppendingPathComponent:@"main.jsbundle"];
-      BOOL isDir;
-      BOOL fileExistsAtPath = [[NSFileManager defaultManager]
-          fileExistsAtPath:documentDirectoryJSBundleFilePath
-               isDirectory:&isDir];
-      if (!fileExistsAtPath) {
-          NSLog(@"[SDK]Missing file so picking default");
-          return [[NSBundle mainBundle] URLForResource:@"main"
-                                         withExtension:@"jsbundle"];
-      } else {
-          NSLog(@"[SDK]GOT file %@", documentDirectoryJSBundleFilePath);
-          return [NSURL fileURLWithPath:documentDirectoryJSBundleFilePath];
-      }
-  #endif
+        [[NSUserDefaults standardUserDefaults] setObject:key
+                                                  forKey:@"bundleKey"];
+    }
+    // Check if there is the main.jsbundle file in the Document directory
+    NSString *documentDirectoryJSBundleFilePath =
+        [[NSSearchPathForDirectoriesInDomains(
+            NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
+            stringByAppendingPathComponent:@"main.jsbundle"];
+    BOOL isDir;
+    BOOL fileExistsAtPath = [[NSFileManager defaultManager]
+        fileExistsAtPath:documentDirectoryJSBundleFilePath
+             isDirectory:&isDir];
+    if (!fileExistsAtPath) {
+        NSLog(@"[SDK]Missing file so picking default");
+        return [[NSBundle mainBundle] URLForResource:@"main"
+                                       withExtension:@"jsbundle"];
+    } else {
+        NSLog(@"[SDK]GOT file %@", documentDirectoryJSBundleFilePath);
+        return [NSURL fileURLWithPath:documentDirectoryJSBundleFilePath];
+    }
+#endif
 }
 
 RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
@@ -388,7 +397,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
                                                     hashString:hashString];
                               NSLog(@"[SDK] SAVED NEW BUNDLE CORRECTLY");
                               dispatch_async(dispatch_get_main_queue(), ^{
-                                 [self showBottomSheet:update_config];
+                                [self showBottomSheet:update_config];
                               });
                           } else {
                               NSLog(@"[SDK] BUNDLE IS UP TO DATE");
@@ -414,7 +423,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
 
 RCT_EXPORT_METHOD(reload) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        RCTTriggerReloadCommandListeners(@"bundle changed");
+      RCTTriggerReloadCommandListeners(@"bundle changed");
     });
 }
 

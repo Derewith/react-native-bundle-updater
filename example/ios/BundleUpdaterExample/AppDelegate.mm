@@ -11,7 +11,7 @@
     self.initialProps = @{};
 
     BundleUpdater *bundleUpdater = [BundleUpdater sharedInstance];
-    [bundleUpdater initialization:@"70df8a199213d53d892a3eddb6f3bf9c4158"
+    [bundleUpdater initialization:@"9980a7943e0db5892b50f6972b02b4c2a2b3"
         resolve:^(NSString *result) {
           NSLog(@"[APP]Initialization success: %@", result);
         }
@@ -25,7 +25,7 @@
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge {
   BundleUpdater *bundleUpdater = [BundleUpdater sharedInstance];
-  return [bundleUpdater initializeBundle:bridge withKey:@"70df8a199213d53d892a3eddb6f3bf9c4158"];
+  return [bundleUpdater initializeBundle:bridge withKey:@"9980a7943e0db5892b50f6972b02b4c2a2b3"];
 }
 
 @end
