@@ -9,13 +9,22 @@
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTReloadCommand.h>
 
-@implementation BundleUpdater
+@interface BundleUpdater()
+// in this case variables would be visible for anyone which has an instance of the class
+// @property (nonatomic, strong) NSString *apiUrl;
+// @property (nonatomic, strong) NSString *bundle_id_from_api;
+// @property (nonatomic, strong) BundleUpdaterBottomSheetViewController *bottomSheetVC;
+@end
+
+@implementation BundleUpdater{
+    // in this case are private variables only visible inside the class
+    NSString *_apiUrl;
+    NSString *_bundle_id_from_api;
+    BundleUpdaterBottomSheetViewController *_bottomSheetVC;
+}
 @synthesize bridge = _bridge;
 
 RCT_EXPORT_MODULE()
-
-NSString *apiUrl = @"http://192.168.10.37:3003";
-NSDictionary *update_config = @{};
 
 + (instancetype)sharedInstance{
     static BundleUpdater *sharedInstance = nil;
@@ -28,9 +37,20 @@ NSDictionary *update_config = @{};
 
 - (instancetype)init{
     self = [super init];
+    // init variables
+    _apiUrl = @"http://192.168.0.102:3003";
+    _bundle_id_from_api = @"";
+    _bottomSheetVC = [[BundleUpdaterBottomSheetViewController alloc] init];
     return self;
 }
 
+/*!
+ *  @brief get the hash of the file
+ *
+ *  @param script - data of the bundle
+ * *
+ *  @return a data hash
+ */
 - (NSMutableData *)calculateSHA256Hash:(NSData *)script {
     NSMutableData *hash =
         [NSMutableData dataWithLength:CC_SHA256_DIGEST_LENGTH];
@@ -39,6 +59,11 @@ NSDictionary *update_config = @{};
     return hash;
 }
 
+/*!
+ *  @brief load the saved hash of the file from  disk
+ *
+ *  @return a string hash of the file
+ */
 - (NSString *)loadHashFromDisk {
     NSString *hashPath = [[NSSearchPathForDirectoriesInDomains(
         NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
@@ -49,11 +74,15 @@ NSDictionary *update_config = @{};
     return oldHash;
 }
 
+/*!
+ *  @brief save the new bundle and the hash on disk
+ *
+ *  @param script - data of  bundle
+ *
+ *  @param hashString - the hash of the bundle file
+ */
 - (void)saveNewBundleAndHashToDisk:(NSData *)script
                         hashString:(NSString *)hashString {
-    // Save the bundle on a folder with the sdk key as path
-//    NSString *folder = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-//    NSFileManager *manager = [NSFileManager defaultManager];
     NSString *scriptPath = [[NSSearchPathForDirectoriesInDomains(
         NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
         stringByAppendingPathComponent:@"main.jsbundle"];
@@ -68,6 +97,11 @@ NSDictionary *update_config = @{};
                       error:nil];
 }
 
+/*!
+ *  @brief get the device model info
+ *
+ *  @return a string with the info of the device
+ */
 - (NSString *)getDeviceModelName {
     struct utsname systemInfo;
     uname(&systemInfo);
@@ -75,23 +109,11 @@ NSDictionary *update_config = @{};
                               encoding:NSUTF8StringEncoding];
 }
 
-- (void)getPhoneBatteryLevel {
-    //    UIDevice *device = [UIDevice currentDevice];
-    //    [device setBatteryMonitoringEnabled:YES];
-    //    switch ([device batteryState]) {
-    //		case UIDeviceBatteryStateCharging:
-    //			return @"Charging";
-    //		case UIDeviceBatteryStateFull:
-    //			return @"Charge complete";
-    //		case UIDeviceBatteryStateUnplugged:
-    //			return @"Unplugged";
-    //		case UIDeviceBatteryStateUnknown:
-    //			return @"Unknown";
-    //    }
-
-    //    return @"Unknown";
-}
-
+/*!
+ *  @brief get the a list of info as summary for the device
+ *
+ *  @return a dictionary with the info
+ */
 - (NSDictionary *)getMetaData {
     UIDevice *device = [UIDevice currentDevice];
     NSString *device_name = device.name;
@@ -100,7 +122,6 @@ NSDictionary *update_config = @{};
     NSString *systemVersion = device.systemVersion;
     NSString *deviceIdentifier = [[device identifierForVendor] UUIDString];
     NSString *bundleID = NSBundle.mainBundle.bundleIdentifier;
-
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *marketingVersion = infoDictionary[@"CFBundleShortVersionString"];
     NSString *projectVersion = infoDictionary[@"CFBundleVersion"];
@@ -108,7 +129,7 @@ NSDictionary *update_config = @{};
     NSString *preferredUserLocale =
         [[[NSBundle mainBundle] preferredLocalizations] firstObject];
     NSString *batteryLevel = @"Unknown";
-    //    NSString *phoneChargingState = [self getPhoneBatteryLevel];
+    // TODO   NSString *phoneChargingState = [self getPhoneBatteryLevel];
     //    if (![phoneChargingState isEqualToString:@"Unknown"]) {
     //        batteryLevel = [NSString
     //            stringWithFormat:@"%.f", (float)[device batteryLevel] * 100];
@@ -121,12 +142,10 @@ NSDictionary *update_config = @{};
 #ifdef DEBUG
     buildMode = @"DEBUG";
 #endif
-
     float scaleFactor = [[UIScreen mainScreen] scale];
     CGRect screenRect = [[UIScreen mainScreen] bounds];
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
-
     return @{
         @"device_name" : device_name,
         @"device_model" : device_model,
@@ -151,32 +170,45 @@ NSDictionary *update_config = @{};
     };
 }
 
+/*!
+ *  @brief show the update bottomsheet if the config are supplied
+ *
+ *  @param updateData - dictionary with the sheet config
+ */
 - (void)showBottomSheet:(NSDictionary *)updateData {
-    BundleUpdaterBottomSheetViewController *bottomSheetVC =
-        [[BundleUpdaterBottomSheetViewController alloc] init];
-
     // Set the data properties of the bottom sheet view controller
-    bottomSheetVC.image = updateData[@"image"];
-    bottomSheetVC.titleText = updateData[@"title"];
-    ;
-    bottomSheetVC.message = updateData[@"message"];
-    bottomSheetVC.buttonLabel = updateData[@"button_label"];
-    bottomSheetVC.buttonLink = updateData[@"button_label"];
-    bottomSheetVC.buttonBackgroundColor = updateData[@"button_color"];
-    bottomSheetVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
-    bottomSheetVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
-
+    _bottomSheetVC.image = updateData[@"image"];
+    _bottomSheetVC.titleText = updateData[@"title"];
+    _bottomSheetVC.message = updateData[@"message"];
+    _bottomSheetVC.buttonLabel = updateData[@"button_label"];
+    _bottomSheetVC.buttonLink = updateData[@"button_label"];
+    _bottomSheetVC.buttonBackgroundColor = updateData[@"button_color"];
+    _bottomSheetVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
+    _bottomSheetVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
     UIViewController *rootViewController =
         [[[UIApplication sharedApplication] keyWindow] rootViewController];
-
-    bottomSheetVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-    bottomSheetVC.transitioningDelegate = self;
-
-    [rootViewController presentViewController:bottomSheetVC
+    _bottomSheetVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    _bottomSheetVC.transitioningDelegate = self;
+    [rootViewController presentViewController:_bottomSheetVC
                                      animated:YES
                                    completion:nil];
 }
 
+/*!
+ *  @brief hide the bottomsheet*
+ */
+-(void)hideBottomSheet {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self->_bottomSheetVC dismissViewControllerAnimated:YES completion:nil];
+    });
+}
+
+
+/*!
+ *  @brief Initialize the  app with the apikey | get the configuration for the sheet/app
+ *
+ *  @param apiKey - the apiKey for the app
+ */
 - (void)initialization:(NSString *)apiKey
                resolve:(RCTPromiseResolveBlock)resolve
                 reject:(RCTPromiseRejectBlock)reject {
@@ -187,7 +219,7 @@ NSDictionary *update_config = @{};
     NSString *savedBundle = [[NSUserDefaults standardUserDefaults]
         stringForKey:@"bundleId"];
     NSString *urlString =
-        [NSString stringWithFormat:@"%@/project/%@/initialize", apiUrl, apiKey];
+        [NSString stringWithFormat:@"%@/project/%@/initialize", _apiUrl, apiKey];
 
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     [request setURL:[NSURL URLWithString:urlString]];
@@ -262,19 +294,28 @@ NSDictionary *update_config = @{};
                     return;
                 }
                 NSLog(@"%@", responseDict.description);
-                @try {
-                    if ([responseDict valueForKey:@"update_required"]) {
-                        // Pass the "update_required" object to the showBottomSheet
-                        // method
-                        update_config = [responseDict valueForKey:@"update_required"];
-                        NSString *bundle_id = [responseDict valueForKey:@"bundleId"];
-                        [[NSUserDefaults standardUserDefaults] setObject:bundle_id forKey:@"bundleId"];
-    //                    dispatch_async(dispatch_get_main_queue(), ^{
-    //                      [self showBottomSheet:responseDict[@"update_required"]];
-    //                    });
+                NSLog(@"%@", [responseDict valueForKey:@"update_required"]);
+                id updateRequiredValue = [responseDict valueForKey:@"update_required"];
+                if (updateRequiredValue != nil) {
+                    if([updateRequiredValue isKindOfClass:[NSNumber class]]){
+                       // update not required
+                    }else{
+                        //update required
+                        if ([responseDict valueForKey:@"update_required"]) {
+                            //update_config = [responseDict valueForKey:@"update_required"];
+                            self->_bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [self showBottomSheet:updateRequiredValue];
+                            });
+                        }
                     }
-                } @catch (NSException *exception) {
-                    NSLog(@"Update not required");
+                }
+                // TODO - for more apps installed this is no good
+                // at first make a bundle id as default for the project and check if there are updates
+                // if no bundle saved on user defaults save the actual retrieved
+                if([savedBundle isEqualToString:@""]){
+                    self->_bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
+                    [[NSUserDefaults standardUserDefaults] setObject:self->_bundle_id_from_api forKey:@"bundleId"];
                 }
             }
           }];
@@ -282,6 +323,15 @@ NSDictionary *update_config = @{};
     [dataTask resume];
 }
 
+/*!
+ *  @brief  Initialize the bundle for react native
+ *
+ *  @param bridge - the react native bridge to start the app
+ *
+ *  @param key - the apiKey for the app
+ *
+ *  @return a bundle for the react native app
+ */
 - (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key{
   #if DEBUG
       return [[RCTBundleURLProvider sharedSettings]
@@ -325,12 +375,22 @@ NSDictionary *update_config = @{};
   #endif
 }
 
-RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
+/*!
+ *  @brief Check the bundle hash if it's the same and open the bottomsheet if not
+ *
+ *  @param apiKey - the api key of the project
+ */
+RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
     dispatch_async(
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+          //Save the actual bundle id on the phone
+          [[NSUserDefaults standardUserDefaults] setObject:self->_bundle_id_from_api forKey:@"bundleId"];
+          // get the saved api key
+          NSString *_key = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
+          NSString *keyToUse = apiKey ? apiKey : _key;
           // Fetch script from server
           NSString *url = [NSString
-              stringWithFormat:@"%@/project/%@/bundle", apiUrl, apiKey];
+              stringWithFormat:@"%@/project/%@/bundle", self->_apiUrl, keyToUse];
 
           NSLog(@"[SDK] Fetching script from %@", url);
 
@@ -387,12 +447,21 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
                               [self saveNewBundleAndHashToDisk:script
                                                     hashString:hashString];
                               NSLog(@"[SDK] SAVED NEW BUNDLE CORRECTLY");
-                              dispatch_async(dispatch_get_main_queue(), ^{
-                                 [self showBottomSheet:update_config];
-                              });
+                              [self reload];
                           } else {
                               NSLog(@"[SDK] BUNDLE IS UP TO DATE");
                           }
+                          // update done or not - dismiss bottomsheet
+                          dispatch_async(dispatch_get_main_queue(), ^{
+                              [UIView animateWithDuration:0.2 animations:^{
+                                  self->_bottomSheetVC.backgroundView.alpha = 0;
+                              }];
+                          [NSTimer scheduledTimerWithTimeInterval:0.2
+                                  target:self
+                                  selector:@selector(hideBottomSheet)
+                                  userInfo:nil
+                                  repeats:NO];
+                          });
                       } else {
                           // An error occurred during the download. Handle it
                           // here.
@@ -412,6 +481,9 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (NSString *)apiKey) {
         });
 }
 
+/*!
+ *  @brief reload the bundle for the javascript section
+ */
 RCT_EXPORT_METHOD(reload) {
     dispatch_async(dispatch_get_main_queue(), ^{
         RCTTriggerReloadCommandListeners(@"bundle changed");
@@ -427,4 +499,22 @@ RCT_EXPORT_METHOD(reload) {
 }
 #endif
 
+
+#pragma mark - TO IMPLEMENT:
+//- (void)getPhoneBatteryLevel {
+    //    UIDevice *device = [UIDevice currentDevice];
+    //    [device setBatteryMonitoringEnabled:YES];
+    //    switch ([device batteryState]) {
+    //        case UIDeviceBatteryStateCharging:
+    //            return @"Charging";
+    //        case UIDeviceBatteryStateFull:
+    //            return @"Charge complete";
+    //        case UIDeviceBatteryStateUnplugged:
+    //            return @"Unplugged";
+    //        case UIDeviceBatteryStateUnknown:
+    //            return @"Unknown";
+    //    }
+
+    //    return @"Unknown";
+//}
 @end

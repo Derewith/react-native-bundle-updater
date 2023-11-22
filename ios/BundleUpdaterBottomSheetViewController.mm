@@ -43,9 +43,26 @@
 }
 
 - (void)reloadApp:(UIButton *)sender {
-    [[BundleUpdater sharedInstance] reload];
+    BundleUpdater *sharedInstance = [BundleUpdater sharedInstance];
+    [sharedInstance checkAndReplaceBundle:nil];
+    // [sharedInstance reload];
     // hide the modal
+    //[self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)hideBottomSheet {
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)handleTapBG:(UITapGestureRecognizer *)gesture {
+    [UIView animateWithDuration:0.2 animations:^{
+        self.backgroundView.alpha = 0;
+    }];
+    [NSTimer scheduledTimerWithTimeInterval:0.2
+            target:self
+            selector:@selector(hideBottomSheet)
+            userInfo:nil
+            repeats:NO];
 }
 
 - (void)viewDidLoad {
@@ -79,6 +96,10 @@
     self.backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
     self.backgroundView.backgroundColor = [UIColor blackColor];
     self.backgroundView.alpha = 0;
+    //recognize touch
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapBG:)];
+    tapGesture.delegate = self;
+    [self.backgroundView addGestureRecognizer:tapGesture];
     [self.view addSubview:self.backgroundView];
 
     // Create the modal view

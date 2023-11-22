@@ -13,6 +13,7 @@
                     reject:(void (^)(NSString *, NSString *, NSError *))reject;
     - (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key;
     - (void)reload;
+    - (void)checkAndReplaceBundle: (nullable NSString *)apiKey;
 #endif
 
 @end

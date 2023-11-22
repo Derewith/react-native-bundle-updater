@@ -1,16 +1,16 @@
-/* eslint-disable */ 
+/* eslint-disable */
 import * as React from 'react';
 import { StyleSheet, Text, ImageBackground } from 'react-native';
 import { checkAndReplaceBundle } from '../../src';
 
 export default function App() {
-  React.useEffect(() => {
-    async function startApp() {
-      await checkAndReplaceBundle('9980a7943e0db5892b50f6972b02b4c2a2b3');
-      console.log('loaded app');
-    }
-    startApp();
-  }, []);
+  // React.useEffect(() => {
+  //   async function startApp() {
+  //     await checkAndReplaceBundle('70df8a199213d53d892a3eddb6f3bf9c4158');
+  //     console.log('loaded app');
+  //   }
+  //   startApp();
+  // }, []);
   return (
     <ImageBackground
       style={styles.container}
@@ -22,7 +22,7 @@ export default function App() {
         opacity: 0,
       }}
     >
-      <Text>ciao alessio come stai?</Text>
+      <Text>ciao hello stai?</Text>
     </ImageBackground>
   );
 }
