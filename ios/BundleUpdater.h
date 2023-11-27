@@ -4,9 +4,8 @@
 #else
     #import <React/RCTBridgeModule.h>
     #import <Foundation/Foundation.h>
+NS_ASSUME_NONNULL_BEGIN
     @interface BundleUpdater : NSObject <RCTBridgeModule, UIViewControllerTransitioningDelegate>
-    @property (nonatomic, weak) RCTBridge *bridge;
-
     + (instancetype)sharedInstance;
     - (void)initialization:(NSString *)apiKey
                 resolve:(void (^)(NSString *))resolve
@@ -14,6 +13,8 @@
     - (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key;
     - (void)reload;
     - (void)checkAndReplaceBundle: (nullable NSString *)apiKey;
+NS_ASSUME_NONNULL_END
+
 #endif
 
 @end

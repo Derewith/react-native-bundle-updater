@@ -3,7 +3,6 @@
 #import "BundleUpdaterBottomSheetViewController.h"
 
 #import "CommonCrypto/CommonDigest.h"
-#import <React/RCTBridge.h>
 #import <React/RCTBridgeModule.h>
 #import <sys/utsname.h>
 #import <React/RCTBundleURLProvider.h>
@@ -22,8 +21,6 @@
     NSString *_bundle_id_from_api;
     BundleUpdaterBottomSheetViewController *_bottomSheetVC;
 }
-@synthesize bridge = _bridge;
-
 RCT_EXPORT_MODULE()
 
 + (instancetype)sharedInstance{
@@ -38,7 +35,7 @@ RCT_EXPORT_MODULE()
 - (instancetype)init{
     self = [super init];
     // init variables
-    _apiUrl = @"http://192.168.0.102:3003";
+    _apiUrl = @"http://192.168.1.92:3003";
     _bundle_id_from_api = @"";
     _bottomSheetVC = [[BundleUpdaterBottomSheetViewController alloc] init];
     return self;
@@ -210,8 +207,8 @@ RCT_EXPORT_MODULE()
  *  @param apiKey - the apiKey for the app
  */
 - (void)initialization:(NSString *)apiKey
-               resolve:(RCTPromiseResolveBlock)resolve
-                reject:(RCTPromiseRejectBlock)reject {
+               resolve:(void (^)(NSString *))resolve
+                reject:(void (^)(NSString *, NSString *, NSError *))reject {
     // TODO fix Conflicting parameter types in implementation of
     // 'initialization:resolve:reject:': 'void (^__strong)(NSString *__strong)'
     // vs '__strong RCTPromiseResolveBlock' (aka 'void (^__strong)(__strong
@@ -347,6 +344,7 @@ RCT_EXPORT_MODULE()
             [[NSFileManager defaultManager] removeItemAtPath:documentDirectoryJSBundleFilePath error:nil];
         }
         [[NSUserDefaults standardUserDefaults] setObject:key forKey:@"bundleKey"];
+        [[NSUserDefaults standardUserDefaults] setObject:@"" forKey:@"bundleId"];
       }
       // Check if there is the main.jsbundle file in the Document directory
       NSString *documentDirectoryJSBundleFilePath =
