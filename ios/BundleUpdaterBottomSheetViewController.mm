@@ -3,7 +3,12 @@
 #import "UIColor+HexString.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "BundleUpdater.h"
-@implementation BundleUpdaterBottomSheetViewController
+
+@implementation BundleUpdaterBottomSheetViewController{
+    CGFloat modalHeight;
+    CGFloat modalY;
+    CGFloat modalPadding;
+}
 
 - (UIFont *)customFontWithSize:(CGFloat)size {
     return [self customFontWithSize:size weight:UIFontWeightBold];
@@ -54,15 +59,81 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)handleTapBG:(UITapGestureRecognizer *)gesture {
-    [UIView animateWithDuration:0.2 animations:^{
+-(void)hideBottomSheetAnimated {
+    [self hideBottomSheetAnimated:0.2];
+}
+
+-(void)hideBottomsheetTimer:(NSTimer *)timer{
+    id duration = [timer userInfo];
+    if(duration){
+        NSLog(@"test %@",duration);
+        [self hideBottomSheetAnimated:[duration floatValue]];
+    }
+}
+
+-(void)hideBottomSheetAnimated:(float)timing {
+    [UIView animateWithDuration:timing animations:^{
         self.backgroundView.alpha = 0;
     }];
-    [NSTimer scheduledTimerWithTimeInterval:0.2
+    [NSTimer scheduledTimerWithTimeInterval:timing
             target:self
             selector:@selector(hideBottomSheet)
             userInfo:nil
             repeats:NO];
+}
+
+
+- (void)handleTapBG:(UITapGestureRecognizer *)gesture {
+    [self hideBottomSheetAnimated];
+}
+
+-(void)handleSwipe:(UIPanGestureRecognizer *)recognizer {
+    if(recognizer.state == UIGestureRecognizerStateChanged){
+        CGPoint translation = [recognizer translationInView:self.view];
+        CGRect frame = self.modalView.frame;
+        if(translation.y > 0){
+            // swipe down
+            frame.origin.y += translation.y;
+            self.modalView.frame = frame;
+            [recognizer setTranslation:CGPointZero inView:self.modalView];
+           // [self hideBottomSheetAnimated];
+        }else{
+            //swipe up
+            //give the illusion that he can swipe up - swipe up a little bit and then back down
+            CGFloat maxTranslation = frame.origin.y;
+            //if it's already at the top, don't move it
+            if(frame.origin.y > self->modalY - 8){
+                maxTranslation += translation.y;
+            }
+            //if the translation is more than the modal height, move untill the modalY
+            CGFloat upperLimit = self->modalY - 8;
+            maxTranslation = MAX(maxTranslation, upperLimit);
+            frame.origin.y = maxTranslation;
+            self.modalView.frame = frame;
+            [recognizer setTranslation:CGPointZero inView:self.modalView];
+        }
+    }else if(recognizer.state == UIGestureRecognizerStateEnded){
+        NSLog(@"ended");
+        if(self.modalView.frame.origin.y > self->modalY + 130){
+            //bring it down
+            CGRect frame = self.modalView.frame;
+            frame.origin.y = self.view.bounds.size.height;
+            [UIView animateWithDuration:0.2 animations:^{
+                self.modalView.frame = frame;
+            }completion:^(BOOL finished) {
+                if(finished){
+                    [self hideBottomSheetAnimated:0.3];
+                }
+            }];
+        }
+        else{
+            [UIView animateWithDuration:0.3 animations:^{
+                CGRect frame = self.modalView.frame;
+                frame.origin.y = self->modalY;
+                self.modalView.frame = frame;
+            }];
+        }
+    }
 }
 
 - (void)viewDidLoad {
@@ -103,8 +174,10 @@
     [self.view addSubview:self.backgroundView];
 
     // Create the modal view
-    CGFloat modalHeight = self.view.bounds.size.height / 2 - 75;
-    CGFloat modalY = self.view.bounds.size.height - modalHeight;
+    modalPadding = 25;
+    modalHeight = self.view.bounds.size.height / 2 - 75 + modalPadding;
+    modalY = self.view.bounds.size.height - modalHeight + modalPadding;
+    
 
     self.modalView = [[UIView alloc]
         initWithFrame:CGRectMake(0, modalY, self.view.bounds.size.width,
@@ -115,6 +188,10 @@
     self.modalView.layer.borderColor = [UIColor blackColor].CGColor;
     self.modalView.layer.cornerRadius = 20;
 
+    //Gesture recognizer
+    UIPanGestureRecognizer *swipeDown = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
+    self.modalView.userInteractionEnabled = YES;
+    [self.modalView addGestureRecognizer:swipeDown];
 
 //    UIBezierPath *maskPath = [UIBezierPath
 //        bezierPathWithRoundedRect:self.modalView.bounds
@@ -250,9 +327,18 @@
     [self.footerLogoImageView.centerXAnchor
         constraintEqualToAnchor:self.modalView.centerXAnchor]
         .active = YES;
+    
+    CGFloat bottomPadding = 23;
+    if(@available(iOS 11.0, *)){
+        UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
+        bottomPadding = window.safeAreaInsets.bottom;
+    }
+    bottomPadding+=10;
+    NSLog(@"%f", bottomPadding);
+    
     self.footerLogoBottomConstraint = [self.footerLogoImageView.bottomAnchor
         constraintEqualToAnchor:self.modalView.bottomAnchor
-                       constant:-23];
+                       constant:-bottomPadding];
     self.footerLogoBottomConstraint.active = YES;
 
     // [self.view setNeedsUpdateConstraints];
