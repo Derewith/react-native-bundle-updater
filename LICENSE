@@ -1,20 +1,40 @@
-MIT License
-
 Copyright (c) 2023 Jonathan Canevese
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Contratto di Licenza per l'Uso a Pagamento del Software
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Questo Contratto di Licenza ("Contratto") è stipulato tra l'Azienda utilizzatrice ("Utente") e Jonathan Canevese ("Licenziante") per regolare l'uso a pagamento del software sviluppato da Jonathan Canevese e descritto di seguito come "Software". Il presente Contratto è incluso nel progetto come file in formato Markdown (.md).
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. Oggetto del Contratto
+
+1.1 Software: Si riferisce al programma informatico sviluppato da Jonathan Canevese, incluso il codice sorgente, il codice oggetto, la documentazione e qualsiasi altro materiale associato.
+
+2. Definizioni
+
+2.1 Utente: Si riferisce all'azienda o entità giuridica che acquisisce la licenza per utilizzare il Software ai sensi di questo Contratto.
+
+3. Licenza
+
+3.1 Jonathan Canevese concede all'Utente o Azienda una licenza non esclusiva, non trasferibile e a pagamento per l'utilizzo del Software in conformità con i termini e le condizioni stabilite in questo Contratto.
+
+4. Pagamento
+
+4.1 In considerazione dell'uso del Software, l'Utente accetta di pagare a Jonathan Canevese una tariffa di licenza come specificato nella fattura emessa dal Licenziante. Il pagamento deve essere effettuato entro i termini indicati nella fattura.
+
+5. Utilizzo
+
+5.1 L'Utente può utilizzare il Software su un numero di dispositivi specificato nella fattura di licenza. L'Utente non può distribuire, noleggiare, concedere in sublicenza o trasferire il Software a terzi senza il consenso scritto del Licenziante.
+
+6. Aggiornamenti e Supporto
+
+6.1 Il Licenziante può fornire aggiornamenti, miglioramenti o correzioni del Software a sua discrezione. L'Utente ha diritto a ricevere supporto tecnico secondo le modalità definite dal Licenziante.
+
+7. Limitazioni di Responsabilità
+
+7.1 Il Licenziante non è responsabile per danni diretti, indiretti, speciali o consequenziali derivanti dall'uso o dall'incapacità di utilizzare il Software, anche se il Licenziante è stato avvisato della possibilità di tali danni.
+
+8. Durata e Risoluzione
+
+8.1 Questa licenza ha una durata indeterminata, a meno che non venga risolta anticipatamente per violazione da parte dell'Utente. In caso di risoluzione, l'Utente deve interrompere l'uso del Software e distruggere tutte le copie in suo possesso.
+
+9. Legge Applicabile
+
+9.1 Questo Contratto è regolato dalle leggi italiane. Qualsiasi controversia derivante da o in relazione a questo Contratto sarà sottoposta alla giurisdizione esclusiva dei tribunali italiani.
