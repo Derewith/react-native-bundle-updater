@@ -78,20 +78,39 @@ RCT_EXPORT_MODULE()
  *
  *  @param hashString - the hash of the bundle file
  */
-- (void)saveNewBundleAndHashToDisk:(NSData *)script
-                        hashString:(NSString *)hashString {
-    NSString *scriptPath = [[NSSearchPathForDirectoriesInDomains(
-        NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
+- (void)saveNewBundle:(NSData *)script
+                 andHashString:(NSString *)hashString
+                 andAssetsFiles:(NSArray*)assetsFiles
+                 fromFolder:(NSString *)sourceFolder{
+    NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    
+    NSString *scriptPath = [documentsDirectory
         stringByAppendingPathComponent:@"main.jsbundle"];
     [script writeToFile:scriptPath atomically:YES];
 
-    NSString *hashPath = [[NSSearchPathForDirectoriesInDomains(
-        NSDocumentDirectory, NSUserDomainMask, YES) firstObject]
+    NSString *hashPath = [documentsDirectory
         stringByAppendingPathComponent:@"main.jsbundle.sha256"];
     [hashString writeToFile:hashPath
                  atomically:YES
                    encoding:NSUTF8StringEncoding
                       error:nil];
+    //assets
+    NSString *assetsDirectory = [documentsDirectory stringByAppendingPathComponent:@"assets"];
+    //check if the directory already exist
+    NSFileManager *manager = [NSFileManager defaultManager];
+    if(![manager fileExistsAtPath:assetsDirectory]){
+        [manager createDirectoryAtPath:assetsDirectory withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+    // Salva i file nella cartella "assets"
+    for (NSDictionary *fileObj in assetsFiles) {
+        NSString *fileName = fileObj[@"file"];
+        NSData *fileData = [[NSData alloc] initWithBase64EncodedString:fileObj[@"data"] options:NSDataBase64DecodingIgnoreUnknownCharacters];
+        
+        NSString *destinationPath = [assetsDirectory stringByAppendingPathComponent:fileName];
+        
+        [fileData writeToFile:destinationPath atomically:YES];
+    }
+    NSLog(@"[SDK] bundle and assets saved on disk");
 }
 
 /*!
@@ -215,6 +234,14 @@ RCT_EXPORT_MODULE()
     // id)')
     NSString *savedBundle = [[NSUserDefaults standardUserDefaults]
         stringForKey:@"bundleId"];
+    NSString *oldKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
+    if(!oldKey || ![oldKey isEqualToString:apiKey]){
+        NSLog(@"detected api key change");
+        //remove the saved bundleId - the actual deletion will be done in the initializeBundle method
+        savedBundle = @"";
+    }
+        
+        
     NSString *urlString =
         [NSString stringWithFormat:@"%@/project/%@/initialize", _apiUrl, apiKey];
 
@@ -241,6 +268,7 @@ RCT_EXPORT_MODULE()
     }
 
     // Set the request body with the JSON data
+    // NSLog(@"[SDK] init json %@", body.description);
     [request setHTTPBody:jsonData];
 
     // Set the appropriate headers for JSON
@@ -299,7 +327,10 @@ RCT_EXPORT_MODULE()
                     }else{
                         //update required
                         if ([responseDict valueForKey:@"update_required"]) {
-                            //update_config = [responseDict valueForKey:@"update_required"];
+                            bool isNecessaryUpdate = [[responseDict valueForKey:@"isNecessaryUpdate"] boolValue];
+                            if(isNecessaryUpdate){
+                                self->_bottomSheetVC.isNecessaryUpdate = true;
+                            }
                             self->_bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
                             dispatch_async(dispatch_get_main_queue(), ^{
                                 [self showBottomSheet:updateRequiredValue];
@@ -396,79 +427,75 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
               forHTTPHeaderField:@"Content-Type"];
           [request setValue:@"Bearer <YOUR_AUTH_TOKEN>"
               forHTTPHeaderField:@"Authorization"];
-
-          NSURLSessionDownloadTask *downloadTask = [[NSURLSession sharedSession]
-              downloadTaskWithRequest:request
-                    completionHandler:^(NSURL *location,
-                                        NSURLResponse *response,
-                                        NSError *error) {
-                      if (error) {
-                          NSLog(@"[SDK] ERROR: %@", error);
-                          return;
-                      }
-
-                      if (location) {
-                          // The file has been downloaded successfully and is
-                          // located at `location`. You can now read it into a
-                          // NSData object.
-                          NSData *script =
-                              [NSData dataWithContentsOfURL:location];
-                          // Now you can use the data
-                          if (!script) {
-                              NSLog(@"[SDK] MISSING SCRIPT DATA FOR URL: %@",
-                                    script);
-                              return;
-                          }
-
-                          // Calculate sha256 hash
-                          NSMutableData *hash =
-                              [self calculateSHA256Hash:script];
-                          NSString *hashString =
-                              [hash base64EncodedStringWithOptions:0];
-
-                          // Load hash from disk
-                          NSString *oldHash = [self loadHashFromDisk];
-
-                          NSLog(@"[SDK] OLDHASH: %@", oldHash);
-                          NSLog(@"[SDK] NEWHAS: %@", hashString);
-
-                          if (![hashString isEqualToString:oldHash]) {
-                              // If the file has changed, save the new bundle
-                              // and hash to disk
-                              [self saveNewBundleAndHashToDisk:script
-                                                    hashString:hashString];
-                              NSLog(@"[SDK] SAVED NEW BUNDLE CORRECTLY");
-                              [self reload];
-                          } else {
-                              NSLog(@"[SDK] BUNDLE IS UP TO DATE");
-                          }
-                          // update done or not - dismiss bottomsheet
-                          dispatch_async(dispatch_get_main_queue(), ^{
-                              [UIView animateWithDuration:0.2 animations:^{
-                                  self->_bottomSheetVC.backgroundView.alpha = 0;
-                              }];
-                          [NSTimer scheduledTimerWithTimeInterval:0.2
-                                  target:self
-                                  selector:@selector(hideBottomSheet)
-                                  userInfo:nil
-                                  repeats:NO];
-                          });
-                      } else {
-                          // An error occurred during the download. Handle it
-                          // here.
-                          NSString *errorMessage = [NSString
-                              stringWithFormat:@"Error: %@",
-                                               error.localizedDescription];
-                          NSString *errorCode = [NSString
-                              stringWithFormat:@"%ld", (long)error.code];
-                          NSString *errorString = [NSString
-                              stringWithFormat:
-                                  @"{\"code\": %@, \"message\": \"%@\"}",
-                                  errorCode, errorMessage];
-                          NSLog(@"[SDK] An error occurred: %@", errorString);
-                      }
+            
+            NSURLSession *session = [NSURLSession sharedSession];
+            NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+                if (error) {
+                  NSLog(@"Error: %@", error.localizedDescription);
+                  return;
+                }
+                NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
+                NSLog(@"%ld",(long)res.statusCode);
+                if(res.statusCode == 200){
+                  NSError *jsonError;
+                  NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+                  if (jsonError) {
+                      NSLog(@"Errore nella decodifica del JSON: %@", jsonError.localizedDescription);
+                      return;
+                  }
+                  // Estrai il bundle e la cartella "assets" dalla risposta JSON
+                    NSString *bundleName = responseDict[@"bundle"][@"file"];
+                    NSString *bundleContent = responseDict[@"bundle"][@"data"];
+                    NSData *bundleData = [[NSData alloc] initWithBase64EncodedString:bundleContent options:NSDataBase64DecodingIgnoreUnknownCharacters];
+                       
+                    // Calculate sha256 hash
+                    NSMutableData *hash =
+                        [self calculateSHA256Hash:bundleData];
+                    NSString *hashString =
+                        [hash base64EncodedStringWithOptions:0];
+                    // Load hash from disk - For now removed
+//                    NSString *oldHash = [self loadHashFromDisk];
+//                    NSLog(@"[SDK] OLDHASH: %@", oldHash);
+//                    NSLog(@"[SDK] NEWHAS: %@", hashString);
+//                    if (![hashString isEqualToString:oldHash]) {
+                  
+                  //ASSETS
+                  NSString *assetsFolderPath = responseDict[@"assetsFolder"][@"path"];
+                  NSArray *assetsFiles = responseDict[@"assetsFolder"][@"files"];
+                  [self saveNewBundle:bundleData andHashString:hashString andAssetsFiles:assetsFiles fromFolder:assetsFolderPath];
+                  [self reload];
+//                    }else{
+//                        NSLog(@"[SDK] BUNDLE IS UP TO DATE");
+//                    }
+                 
+                }else if(res.statusCode == 404){
+                    //TODO
+                }else {
+                    //generic error
+                    NSString *errorMessage = [NSString
+                        stringWithFormat:@"Error: %@",
+                                         error.localizedDescription];
+                    NSString *errorCode = [NSString
+                        stringWithFormat:@"%ld", (long)error.code];
+                    NSString *errorString = [NSString
+                        stringWithFormat:
+                            @"{\"code\": %@, \"message\": \"%@\"}",
+                            errorCode, errorMessage];
+                    NSLog(@"[SDK] An error occurred: %@", errorString);
+                }
+                // update done or not - dismiss bottomsheet
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [UIView animateWithDuration:0.2 animations:^{
+                        self->_bottomSheetVC.backgroundView.alpha = 0;
                     }];
-          [downloadTask resume];
+                [NSTimer scheduledTimerWithTimeInterval:0.2
+                        target:self
+                        selector:@selector(hideBottomSheet)
+                        userInfo:nil
+                        repeats:NO];
+                });
+            }];
+          [task resume];
         });
 }
 
