@@ -1,20 +1,25 @@
 package com.bundleupdater;
 
-import androidx.annotation.NonNull;
+import android.content.Context;
+import android.content.Intent;
 
+import androidx.annotation.NonNull;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-
-import com.facebook.react.bridge.*;
-import java.net.URL;
-import java.security.MessageDigest;
-import android.content.Context;
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
+public class BundleUpdaterModule extends ReactContextBaseJavaModule {
 
-public class BundleUpdaterModule extends BundleUpdaterSpec {
   public static final String NAME = "BundleUpdater";
+  private final String apiUrl = "http://192.168.1.136:3003/";
 
   BundleUpdaterModule(ReactApplicationContext context) {
     super(context);
@@ -25,51 +30,59 @@ public class BundleUpdaterModule extends BundleUpdaterSpec {
   public String getName() {
     return NAME;
   }
-  
-  val apiUrl = "http://192.168.1.136:3003/"
-  val update_config = {}
 
   @ReactMethod
-  fun checkAndReplaceBundle(apiKey: String) {
-    val context: Context = currentActivity?.applicationContext ?: return
-    Thread(
-        Runnable {
-            val script = URL(apiUrl + apiKey + "/bundle").readBytes()
-            val scriptPath = context.filesDir.absolutePath + "/main.jsbundle"
+  public void checkAndReplaceBundle(String apiKey) {
+    new Thread(() -> {
+      try {
+        URL url = new URL(apiUrl + apiKey + "/bundle");
+        byte[] script = url.openStream().readAllBytes();
+        String scriptPath =
+          getReactApplicationContext().getFilesDir().getAbsolutePath() +
+          "/main.jsbundle";
 
-            var oldHash: String? = null
-            val oldBundle = File(scriptPath)
-            if (oldBundle.exists()) {
-                val bytes = oldBundle.readBytes()
-                oldHash = hash(bytes)
-            }
-
-            val newHash = hash(script)
-            if (newHash != oldHash) {
-                oldBundle.writeBytes(script)
-            }
+        File oldBundle = new File(scriptPath);
+        String oldHash = null;
+        if (oldBundle.exists()) {
+          byte[] bytes = Files.readAllBytes(Paths.get(scriptPath));
+          oldHash = hash(bytes);
         }
-    ).start()
+
+        String newHash = hash(script);
+        if (!newHash.equals(oldHash)) {
+          Files.write(Paths.get(scriptPath), script);
+        }
+      } catch (IOException | NoSuchAlgorithmException e) {
+        e.printStackTrace();
+      }
+    })
+      .start();
   }
 
   @ReactMethod
-  fun initialization(apiKey: String) {
+  public void initialization(String apiKey) {}
+
+  @ReactMethod
+  public void initializeBundle(String key) {}
+
+  private String hash(byte[] bytes) throws NoSuchAlgorithmException {
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    byte[] hash = digest.digest(bytes);
+    StringBuilder hexString = new StringBuilder();
+    for (byte b : hash) {
+      hexString.append(String.format("%02x", b));
+    }
+    return hexString.toString();
   }
 
   @ReactMethod
-  fun initializeBundle(key: String) {
-  }
-
-  private fun hash(bytes: ByteArray): String {
-    val digest = MessageDigest.getInstance("SHA-256")
-    val hash = digest.digest(bytes)
-    return hash.fold("", { str, it -> str + "%02x".format(it) })
-  }
-  
-  @ReactMethod
-  fun reload() {
-    val intent = currentActivity?.packageManager?.getLaunchIntentForPackage(currentActivity?.packageName.toString())
-    currentActivity?.finishAffinity()
-    currentActivity?.startActivity(intent)
+  public void reload() {
+    Intent intent = getReactApplicationContext()
+      .getPackageManager()
+      .getLaunchIntentForPackage(getReactApplicationContext().getPackageName());
+    if (intent != null) {
+      intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+      getReactApplicationContext().startActivity(intent);
+    }
   }
 }

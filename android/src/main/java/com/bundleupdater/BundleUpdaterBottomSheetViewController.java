@@ -67,10 +67,6 @@ public class BundleUpdaterBottomSheetViewController {
     // Reload the app
   }
 
-  public void viewDidAppear() {
-    // Show the modal view with animation
-  }
-
   public void updateViewConstraints() {
     // Update view constraints here
   }
