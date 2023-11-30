@@ -10,14 +10,20 @@ bun install react-native-bundle-updater
 
 ## Usage
 
-```js
+Make some modifications to your App files on the react native side.
+<!-- ```js
 import something from 'react-native-bundle-updater';
-```
+``` -->
+and then run:
 
 ```sh
-npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios --minify true
+bun upload:dev folderOfJSBundle assetsGeneratedFolder  apiKey
+```
 
-bun upload ./example/ios/main.jsbundle 9980a7943e0db5892b50f6972b02b4c2a2b3
+Example:
+
+```sh
+bun upload:dev ./example/ios/main.jsbundle ./example/ios/assets  31ad196f026d0b07b7dffe9019f708955c13
 ```
 
 ## Contributing
