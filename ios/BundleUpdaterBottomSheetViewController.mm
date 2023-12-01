@@ -168,9 +168,11 @@
     self.backgroundView.backgroundColor = [UIColor blackColor];
     self.backgroundView.alpha = 0;
     //recognize touch
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapBG:)];
-    tapGesture.delegate = self;
-    [self.backgroundView addGestureRecognizer:tapGesture];
+    if(!self.isNecessaryUpdate){
+        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapBG:)];
+        self.backgroundView.userInteractionEnabled = YES;
+        [self.backgroundView addGestureRecognizer:tapGesture];
+    }
     [self.view addSubview:self.backgroundView];
 
     // Create the modal view
@@ -188,10 +190,12 @@
     self.modalView.layer.borderColor = [UIColor blackColor].CGColor;
     self.modalView.layer.cornerRadius = 20;
 
-    //Gesture recognizer
-    UIPanGestureRecognizer *swipeDown = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-    self.modalView.userInteractionEnabled = YES;
-    [self.modalView addGestureRecognizer:swipeDown];
+    //Swipe recognizer
+    if(!self.isNecessaryUpdate){
+        UIPanGestureRecognizer *swipeRec = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
+        self.modalView.userInteractionEnabled = YES;
+        [self.modalView addGestureRecognizer:swipeRec];
+    }
 
 //    UIBezierPath *maskPath = [UIBezierPath
 //        bezierPathWithRoundedRect:self.modalView.bounds

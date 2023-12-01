@@ -33,7 +33,8 @@
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
     "release": "release-it",
-    "upload": "node cli.js"
+    "upload": "node cli.js",
+    "upload:dev": "cd example && npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios --minify true && cd .. && node cli.js"
   },
   "keywords": [
     "react-native",
@@ -144,6 +145,7 @@
     "jsSrcsDir": "src"
   },
   "dependencies": {
+    "archiver": "^6.0.1",
     "axios": "^1.5.1"
   }
 }

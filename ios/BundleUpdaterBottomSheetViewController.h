@@ -24,4 +24,6 @@
 @property (nonatomic, strong) NSLayoutConstraint *buttonBottomConstraint;
 @property (nonatomic, strong) NSLayoutConstraint *footerLogoBottomConstraint;
 
+@property (nonatomic) BOOL isNecessaryUpdate;
+
 @end
