@@ -33,7 +33,7 @@
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "prepare": "bob build",
     "release": "release-it",
-    "upload": "node cli.js"
+    "upload": "node cli.mjs uploadbundle /Users/jonathancanevese/Downloads/react-native-bundle-updater/example 9980a7943e0db5892b50f6972b02b4c2a2b3"
   },
   "keywords": [
     "react-native",
@@ -58,6 +58,9 @@
     "@types/jest": "^28.1.2",
     "@types/react": "~17.0.21",
     "@types/react-native": "0.70.0",
+    "chalk": "^5.3.0",
+    "child_process": "^1.0.2",
+    "commander": "^11.1.0",
     "commitlint": "^17.0.2",
     "del-cli": "^5.0.0",
     "eslint": "^8.4.1",
