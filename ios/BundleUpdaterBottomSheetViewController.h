@@ -11,6 +11,7 @@
 @property (nonatomic, strong) NSString *buttonBackgroundColor;
 @property (nonatomic, strong) UIImage *buttonIcon; // TODO verify
 @property (nonatomic, strong) UIImage *footerLogo;
+@property (nonatomic) BOOL isModal;
 
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UILabel *titleLabel;
