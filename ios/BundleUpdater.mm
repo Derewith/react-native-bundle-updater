@@ -1,25 +1,26 @@
 #import "BundleUpdater.h"
-
-#import "BundleUpdaterBottomSheetViewController.h"
-
+#import "AlertViewTest.h"
+#import "BundleUpdaterViewController.h"
 #import "CommonCrypto/CommonDigest.h"
+
 #import <React/RCTBridgeModule.h>
 #import <sys/utsname.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTReloadCommand.h>
 
+
 @interface BundleUpdater()
 // in this case variables would be visible for anyone which has an instance of the class
 // @property (nonatomic, strong) NSString *apiUrl;
 // @property (nonatomic, strong) NSString *bundle_id_from_api;
-// @property (nonatomic, strong) BundleUpdaterBottomSheetViewController *bottomSheetVC;
+// @property (nonatomic, strong) BundleUpdaterViewController *updaterVC;
 @end
 
 @implementation BundleUpdater{
     // in this case are private variables only visible inside the class
     NSString *_apiUrl;
     NSString *_bundle_id_from_api;
-    BundleUpdaterBottomSheetViewController *_bottomSheetVC;
+    BundleUpdaterViewController *_updaterVC;
 }
 RCT_EXPORT_MODULE()
 
@@ -37,7 +38,7 @@ RCT_EXPORT_MODULE()
     // init variables
     _apiUrl = @"http://192.168.1.92:3003";
     _bundle_id_from_api = @"";
-    _bottomSheetVC = [[BundleUpdaterBottomSheetViewController alloc] init];
+    _updaterVC = [[BundleUpdaterViewController alloc] init];
     return self;
 }
 
@@ -191,21 +192,41 @@ RCT_EXPORT_MODULE()
  *
  *  @param updateData - dictionary with the sheet config
  */
-- (void)showBottomSheet:(NSDictionary *)updateData {
+- (void)showUpdateVC:(NSDictionary *)updateData {
     // Set the data properties of the bottom sheet view controller
-    _bottomSheetVC.image = updateData[@"image"];
-    _bottomSheetVC.titleText = updateData[@"title"];
-    _bottomSheetVC.message = updateData[@"message"];
-    _bottomSheetVC.buttonLabel = updateData[@"button_label"];
-    _bottomSheetVC.buttonLink = updateData[@"button_label"];
-    _bottomSheetVC.buttonBackgroundColor = updateData[@"button_color"];
-    _bottomSheetVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
-    _bottomSheetVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
+    _updaterVC.image = updateData[@"image"];
+    _updaterVC.titleText = updateData[@"title"];
+    _updaterVC.message = updateData[@"message"];
+    _updaterVC.buttonLabel = updateData[@"button_label"];
+    _updaterVC.buttonLink = updateData[@"button_label"];
+    _updaterVC.buttonBackgroundColor = updateData[@"button_color"];
+    _updaterVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
+    _updaterVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
+    NSString *type = updateData[@"type"];
+    if([type isEqualToString:@"Notification"]){
+        //TODO - pass config to the notification
+        AlertViewTest *alertVC = [AlertViewTest new];
+        if([alertVC isKindOfClass:[UIViewController class]]){
+            UIViewController *_alertVC = (UIViewController *)alertVC;
+            _alertVC.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+            // present the new viewContoller
+            dispatch_async(dispatch_get_main_queue(), ^{
+               UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+               UIViewController *rootViewController = window.rootViewController;
+               [rootViewController presentViewController:_alertVC animated:NO completion:nil];
+            });
+            return;
+        }else{
+           NSLog(@"[SDK] It's NOT an UIViewController, display normal bottomsheet");
+        }
+    }else if([type isEqualToString:@"Modal"]){
+        _updaterVC.isModal = true;
+    }
     UIViewController *rootViewController =
         [[[UIApplication sharedApplication] keyWindow] rootViewController];
-    _bottomSheetVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-    _bottomSheetVC.transitioningDelegate = self;
-    [rootViewController presentViewController:_bottomSheetVC
+    _updaterVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    _updaterVC.transitioningDelegate = self;
+    [rootViewController presentViewController:_updaterVC
                                      animated:YES
                                    completion:nil];
 }
@@ -215,7 +236,7 @@ RCT_EXPORT_MODULE()
  */
 -(void)hideBottomSheet {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self->_bottomSheetVC dismissViewControllerAnimated:YES completion:nil];
+        [self->_updaterVC dismissViewControllerAnimated:YES completion:nil];
     });
 }
 
@@ -281,7 +302,7 @@ RCT_EXPORT_MODULE()
         [NSURLSession sessionWithConfiguration:sessionConfiguration];
 //     MARK: - TO TEST THE MODAL
 //     dispatch_async(dispatch_get_main_queue(), ^{
-//        [self showBottomSheet:@{
+//        [self showUpdateVC:@{
 //            @"button_color": @"#FF1542",
 //            @"button_label": @"Aggiorna ora",
 //            @"button_link" : @"https://xylem.com",
@@ -291,6 +312,24 @@ RCT_EXPORT_MODULE()
 //            @"title": @"Aggiornamento disponibile!"
 //       }];
 //    });
+// MARK: - to test the notification
+//    AlertViewTest *alertVC = [AlertViewTest new];
+//    if([alertVC isKindOfClass:[UIViewController class]]){
+//        NSLog(@"is uiViewController");
+//        UIViewController *_alertVC = (UIViewController *)alertVC;
+//        _alertVC.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+//        // present the new viewContoller
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+//            UIViewController *rootViewController = window.rootViewController;
+//            [rootViewController presentViewController:_alertVC animated:NO completion:nil];
+//        });
+//        // [alertView useAlertView];
+//    }else{
+//        NSLog(@"is NOT uiViewController");
+//    }
+
+    
     // Create the task to send the request
     NSURLSessionDataTask *dataTask = [session
         dataTaskWithRequest:request
@@ -329,11 +368,11 @@ RCT_EXPORT_MODULE()
                         if ([responseDict valueForKey:@"update_required"]) {
                             bool isNecessaryUpdate = [[responseDict valueForKey:@"isNecessaryUpdate"] boolValue];
                             if(isNecessaryUpdate){
-                                self->_bottomSheetVC.isNecessaryUpdate = true;
+                                self->_updaterVC.isNecessaryUpdate = true;
                             }
                             self->_bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
                             dispatch_async(dispatch_get_main_queue(), ^{
-                                [self showBottomSheet:updateRequiredValue];
+                                [self showUpdateVC:updateRequiredValue];
                             });
                         }
                     }
@@ -486,7 +525,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                 // update done or not - dismiss bottomsheet
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [UIView animateWithDuration:0.2 animations:^{
-                        self->_bottomSheetVC.backgroundView.alpha = 0;
+                        self->_updaterVC.backgroundView.alpha = 0;
                     }];
                 [NSTimer scheduledTimerWithTimeInterval:0.2
                         target:self

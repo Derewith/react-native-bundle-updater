@@ -1,4 +1,4 @@
-#import "BundleUpdaterBottomSheetViewController.h"
+#import "BundleUpdaterViewController.h"
 #import "BundleUpdaterButton.h"
 #import "UIColor+HexString.h"
 #import <SDWebImage/UIImageView+WebCache.h>
@@ -6,7 +6,7 @@
 
 #define MAX_MESSAGE_HEIGHT 115
 
-@implementation BundleUpdaterBottomSheetViewController{
+@implementation BundleUpdaterViewController{
     CGFloat modalHeight;
     CGFloat modalY;
     CGFloat modalPadding;

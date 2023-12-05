@@ -1,7 +1,10 @@
 #import <UIKit/UIKit.h>
 #import "BundleUpdaterButton.h"
 
-@interface BundleUpdaterBottomSheetViewController : UIViewController <UIGestureRecognizerDelegate>
+@interface BundleUpdaterViewController : UIViewController <UIGestureRecognizerDelegate>
+
+// DEFAULT IS A BOTTOM SHEET
+@property (nonatomic) BOOL isModal;
 
 @property (nonatomic, strong) NSString *image;
 @property (nonatomic, strong) NSString *titleText;
@@ -11,7 +14,6 @@
 @property (nonatomic, strong) NSString *buttonBackgroundColor;
 @property (nonatomic, strong) UIImage *buttonIcon; // TODO verify
 @property (nonatomic, strong) UIImage *footerLogo;
-@property (nonatomic) BOOL isModal;
 
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UILabel *titleLabel;
