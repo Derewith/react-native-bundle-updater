@@ -8,11 +8,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface AlertViewTest : NSObject
+@interface BundlerUpdaterNitificationVC : UIViewController
 
-@property (nonatomic, strong) NSString *test;
-
-- (void)useAlertView;
+@property (nonatomic) BOOL isNecessaryUpdate;
 
 @end
 

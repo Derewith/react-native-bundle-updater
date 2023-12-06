@@ -1,5 +1,5 @@
 #import "BundleUpdater.h"
-#import "AlertViewTest.h"
+#import "BundlerUpdaterNitificationVC.h"
 #import "BundleUpdaterViewController.h"
 #import "CommonCrypto/CommonDigest.h"
 
@@ -10,19 +10,22 @@
 
 
 @interface BundleUpdater()
-// in this case variables would be visible for anyone which has an instance of the class
-// @property (nonatomic, strong) NSString *apiUrl;
-// @property (nonatomic, strong) NSString *bundle_id_from_api;
-// @property (nonatomic, strong) BundleUpdaterViewController *updaterVC;
+// in this case props will be visible to any subclass (them are still private)
+// useful when need of getter and setter by default
+    @property (nonatomic, strong) NSString *apiUrl;
+    @property (nonatomic, strong) NSString *bundle_id_from_api;
+    @property (nonatomic, strong) BundleUpdaterViewController *updaterVC;
 @end
 
 @implementation BundleUpdater{
-    // in this case are private variables only visible inside the class
-    NSString *_apiUrl;
-    NSString *_bundle_id_from_api;
-    BundleUpdaterViewController *_updaterVC;
+//    in this case are private instance variables only visible inside this class and not on subclasses
+//    NSString *_apiUrl;
+//    NSString *_bundle_id_from_api;
+//    BundleUpdaterViewController *_updaterVC;
 }
 RCT_EXPORT_MODULE()
+
+// MARK: - INIT
 
 + (instancetype)sharedInstance{
     static BundleUpdater *sharedInstance = nil;
@@ -33,14 +36,33 @@ RCT_EXPORT_MODULE()
     return sharedInstance;
 }
 
-- (instancetype)init{
-    self = [super init];
-    // init variables
-    _apiUrl = @"http://192.168.1.92:3003";
-    _bundle_id_from_api = @"";
-    _updaterVC = [[BundleUpdaterViewController alloc] init];
-    return self;
+// MARK: - SETTERS
+
+- (NSString *)apiUrl{
+    //lazy initialization
+    if(!_apiUrl){
+        _apiUrl = @"http://192.168.1.92:3003";
+    }
+    return _apiUrl;
 }
+
+- (NSString *)bundle_id_from_api{
+    // lazy init
+    if(!_bundle_id_from_api){
+        _bundle_id_from_api = @"";
+    }
+    return _bundle_id_from_api;
+}
+
+- (BundleUpdaterViewController *)updaterVC {
+    // lazy init
+    if(!_updaterVC){
+        _updaterVC = [[BundleUpdaterViewController alloc] init];
+    }
+    return _updaterVC;
+}
+
+// MARK: - METHODS
 
 /*!
  *  @brief get the hash of the file
@@ -192,41 +214,45 @@ RCT_EXPORT_MODULE()
  *
  *  @param updateData - dictionary with the sheet config
  */
-- (void)showUpdateVC:(NSDictionary *)updateData {
+- (void)showUpdateVC:(NSDictionary *)updateData withNecessaryUpdate:(BOOL)isNecessaryUpdate{
     // Set the data properties of the bottom sheet view controller
-    _updaterVC.image = updateData[@"image"];
-    _updaterVC.titleText = updateData[@"title"];
-    _updaterVC.message = updateData[@"message"];
-    _updaterVC.buttonLabel = updateData[@"button_label"];
-    _updaterVC.buttonLink = updateData[@"button_label"];
-    _updaterVC.buttonBackgroundColor = updateData[@"button_color"];
-    _updaterVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
-    _updaterVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
+    self.updaterVC.image = updateData[@"image"];
+    self.updaterVC.titleText = updateData[@"title"];
+    self.updaterVC.message = updateData[@"message"];
+    self.updaterVC.buttonLabel = updateData[@"button_label"];
+    self.updaterVC.buttonLink = updateData[@"button_label"];
+    self.updaterVC.buttonBackgroundColor = updateData[@"button_color"];
+    self.updaterVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
+    self.updaterVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
+    if(isNecessaryUpdate){
+        self.updaterVC.isNecessaryUpdate = true;
+    }
     NSString *type = updateData[@"type"];
     if([type isEqualToString:@"Notification"]){
         //TODO - pass config to the notification
-        AlertViewTest *alertVC = [AlertViewTest new];
-        if([alertVC isKindOfClass:[UIViewController class]]){
-            UIViewController *_alertVC = (UIViewController *)alertVC;
-            _alertVC.modalPresentationStyle = UIModalPresentationOverCurrentContext;
+        BundlerUpdaterNitificationVC *notificationVC = [BundlerUpdaterNitificationVC new];
+        notificationVC.isNecessaryUpdate = isNecessaryUpdate;
+        if([notificationVC isKindOfClass:[UIViewController class]]){
+            UIViewController *_notificationVC = (UIViewController *)notificationVC;
+            _notificationVC.modalPresentationStyle = UIModalPresentationOverCurrentContext;
             // present the new viewContoller
             dispatch_async(dispatch_get_main_queue(), ^{
                UIWindow *window = [[UIApplication sharedApplication] keyWindow];
                UIViewController *rootViewController = window.rootViewController;
-               [rootViewController presentViewController:_alertVC animated:NO completion:nil];
+               [rootViewController presentViewController:_notificationVC animated:NO completion:nil];
             });
             return;
         }else{
            NSLog(@"[SDK] It's NOT an UIViewController, display normal bottomsheet");
         }
     }else if([type isEqualToString:@"Modal"]){
-        _updaterVC.isModal = true;
+        self.updaterVC.isModal = true;
     }
     UIViewController *rootViewController =
         [[[UIApplication sharedApplication] keyWindow] rootViewController];
-    _updaterVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-    _updaterVC.transitioningDelegate = self;
-    [rootViewController presentViewController:_updaterVC
+    self.updaterVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    self.updaterVC.transitioningDelegate = self;
+    [rootViewController presentViewController:self.updaterVC
                                      animated:YES
                                    completion:nil];
 }
@@ -236,7 +262,7 @@ RCT_EXPORT_MODULE()
  */
 -(void)hideBottomSheet {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self->_updaterVC dismissViewControllerAnimated:YES completion:nil];
+        [self.updaterVC dismissViewControllerAnimated:YES completion:nil];
     });
 }
 
@@ -264,7 +290,7 @@ RCT_EXPORT_MODULE()
         
         
     NSString *urlString =
-        [NSString stringWithFormat:@"%@/project/%@/initialize", _apiUrl, apiKey];
+        [NSString stringWithFormat:@"%@/project/%@/initialize", self.apiUrl, apiKey];
 
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     [request setURL:[NSURL URLWithString:urlString]];
@@ -341,9 +367,9 @@ RCT_EXPORT_MODULE()
             } else {
 //                NSHTTPURLResponse *httpResponse =
 //                    (NSHTTPURLResponse *)response;
-                NSLog(@"[SDK] initialization response: %@",
-                      [[NSString alloc] initWithData:data
-                                            encoding:NSUTF8StringEncoding]);
+//                NSLog(@"[SDK] initialization response: %@",
+//                      [[NSString alloc] initWithData:data
+//                                            encoding:NSUTF8StringEncoding]);
 //                if(httpResponse.statusCode == 404){
 //                    
 //                }
@@ -357,22 +383,20 @@ RCT_EXPORT_MODULE()
                     NSLog(@"[SDK] JSON parsing error: %@", jsonError);
                     return;
                 }
-                NSLog(@"%@", responseDict.description);
-                NSLog(@"%@", [responseDict valueForKey:@"update_required"]);
+//                NSLog(@"%@", responseDict.description);
+//                NSLog(@"%@", [responseDict valueForKey:@"update_required"]);
                 id updateRequiredValue = [responseDict valueForKey:@"update_required"];
                 if (updateRequiredValue != nil) {
+                    NSLog(@"Update required %@", updateRequiredValue ? @"YES": @"NO");
                     if([updateRequiredValue isKindOfClass:[NSNumber class]]){
                        // update not required
                     }else{
                         //update required
                         if ([responseDict valueForKey:@"update_required"]) {
-                            bool isNecessaryUpdate = [[responseDict valueForKey:@"isNecessaryUpdate"] boolValue];
-                            if(isNecessaryUpdate){
-                                self->_updaterVC.isNecessaryUpdate = true;
-                            }
-                            self->_bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
+                            bool isNecessaryUpdate = [[responseDict valueForKey:@"is_necessary"] boolValue];
+                            self.bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
                             dispatch_async(dispatch_get_main_queue(), ^{
-                                [self showUpdateVC:updateRequiredValue];
+                                [self showUpdateVC:updateRequiredValue withNecessaryUpdate:isNecessaryUpdate];
                             });
                         }
                     }
@@ -445,13 +469,13 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
     dispatch_async(
         dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
           //Save the actual bundle id on the phone
-          [[NSUserDefaults standardUserDefaults] setObject:self->_bundle_id_from_api forKey:@"bundleId"];
+          [[NSUserDefaults standardUserDefaults] setObject:self.bundle_id_from_api forKey:@"bundleId"];
           // get the saved api key
           NSString *_key = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
           NSString *keyToUse = apiKey ? apiKey : _key;
           // Fetch script from server
           NSString *url = [NSString
-              stringWithFormat:@"%@/project/%@/bundle", self->_apiUrl, keyToUse];
+              stringWithFormat:@"%@/project/%@/bundle", self.apiUrl, keyToUse];
 
           NSLog(@"[SDK] Fetching script from %@", url);
 
@@ -474,7 +498,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                   return;
                 }
                 NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
-                NSLog(@"%ld",(long)res.statusCode);
+                // NSLog(@"%ld",(long)res.statusCode);
                 if(res.statusCode == 200){
                   NSError *jsonError;
                   NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
@@ -525,7 +549,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                 // update done or not - dismiss bottomsheet
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [UIView animateWithDuration:0.2 animations:^{
-                        self->_updaterVC.backgroundView.alpha = 0;
+                        self.updaterVC.backgroundView.alpha = 0;
                     }];
                 [NSTimer scheduledTimerWithTimeInterval:0.2
                         target:self
