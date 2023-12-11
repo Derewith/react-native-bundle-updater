@@ -1,6 +1,6 @@
 {
   "name": "react-native-bundle-updater",
-  "version": "0.0.1-alpha753",
+  "version": "0.0.1-alpha999",
   "description": "Handle your app updates",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",

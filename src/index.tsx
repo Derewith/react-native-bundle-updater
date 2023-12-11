@@ -26,5 +26,8 @@ const BundleUpdater = BundleUpdaterModule
 
 export async function checkAndReplaceBundle(apiKey: string): Promise<void> {
   await BundleUpdater.checkAndReplaceBundle(apiKey);
-  // await BundleUpdater.reload();
+}
+
+export async function restart(): Promise<void> {
+  await BundleUpdater.restart();
 }

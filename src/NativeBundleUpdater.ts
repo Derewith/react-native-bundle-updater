@@ -3,7 +3,7 @@ import { TurboModuleRegistry } from 'react-native';
 
 export interface Spec extends TurboModule {
   checkAndReplaceBundle: (apiKey: string) => Promise<boolean>; // TODO - remove apiKey
-  reload: () => Promise<void>;
+  restart: () => Promise<void>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('BundleUpdater');

@@ -1,16 +1,18 @@
 /* eslint-disable */
 import * as React from 'react';
-import { StyleSheet, Text, ImageBackground } from 'react-native';
-// import { checkAndReplaceBundle } from '../../src';
+import { StyleSheet, Button, Text, ImageBackground } from 'react-native';
+// import { restart } from 'react-native-bundle-updater';
+import { restart } from '../../src';
 
 export default function App() {
-  // React.useEffect(() => {
-  //   async function startApp() {
-  //     await checkAndReplaceBundle('70df8a199213d53d892a3eddb6f3bf9c4158');
-  //     console.log('loaded app');
-  //   }
-  //   startApp();
-  // }, []);
+  const handleReload = async () => {
+    try {
+      await restart();
+    } catch (error) {
+      console.log('[handleReload]:', error);
+    }
+  };
+
   return (
     <ImageBackground
       style={styles.container}
@@ -22,7 +24,8 @@ export default function App() {
         opacity: 1,
       }}
     >
-      <Text>DEVELONDIGITAL 2025</Text>
+      <Button title="Reload" onPress={handleReload} />
+      <Text>W LA FIGA 2025</Text>
     </ImageBackground>
   );
 }

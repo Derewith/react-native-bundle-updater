@@ -1,7 +1,11 @@
 package com.bundleupdaterexample;
 
+import android.util.Log;
+
+import com.bundleupdater.BundleUpdaterModule;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
+import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
 
@@ -15,7 +19,6 @@ public class MainActivity extends ReactActivity {
   protected String getMainComponentName() {
     return "BundleUpdaterExample";
   }
-
   /**
    * Returns the instance of the {@link ReactActivityDelegate}. Here we use a util class {@link
    * DefaultReactActivityDelegate} which allows you to easily enable Fabric and Concurrent React
@@ -24,9 +27,10 @@ public class MainActivity extends ReactActivity {
   @Override
   protected ReactActivityDelegate createReactActivityDelegate() {
     return new DefaultReactActivityDelegate(
-        this,
-        getMainComponentName(),
-        // If you opted-in for the New Architecture, we enable the Fabric Renderer.
-        DefaultNewArchitectureEntryPoint.getFabricEnabled());
+      this,
+      getMainComponentName(),
+      // If you opted-in for the New Architecture, we enable the Fabric Renderer.
+      DefaultNewArchitectureEntryPoint.getFabricEnabled()
+    );
   }
 }

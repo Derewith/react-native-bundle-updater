@@ -10,10 +10,6 @@
 #import <sys/utsname.h>
 
 @interface BundleUpdater()
-// in this case variables would be visible for anyone which has an instance of the class
-// @property (nonatomic, strong) NSString *apiUrl;
-// @property (nonatomic, strong) NSString *bundle_id_from_api;
-// @property (nonatomic, strong) BundleUpdaterBottomSheetViewController *bottomSheetVC;
 @end
 
 @implementation BundleUpdater{

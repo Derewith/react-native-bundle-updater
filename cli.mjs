@@ -51,10 +51,6 @@ program
   .option('-e, --entry <entry>', 'Entry file', 'index.js')
   .option('-m, --minify', 'Minify bundle', false)
   .action(async (projectPath, apiKey, options) => {
-    const item_as = `66 117 110 100 108 101 85 112 100 97 116 101 114`;
-    console.log('\n\n');
-    console.log(chalk.bgBlack(item_as));
-    console.log('\n\n');
     // const absoluteProjectPath = path.resolve(__dirname, projectPath);
     // process.chdir(absoluteProjectPath); // Change the current working directory
     process.chdir(projectPath); // Change the current working directory
