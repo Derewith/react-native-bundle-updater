@@ -1,10 +1,12 @@
-#import "BundleUpdaterBottomSheetViewController.h"
+#import "BundleUpdaterViewController.h"
 #import "BundleUpdaterButton.h"
 #import "UIColor+HexString.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "BundleUpdater.h"
 
-@implementation BundleUpdaterBottomSheetViewController{
+#define MAX_MESSAGE_HEIGHT 115
+
+@implementation BundleUpdaterViewController{
     CGFloat modalHeight;
     CGFloat modalY;
     CGFloat modalPadding;
@@ -140,7 +142,7 @@
     [super viewDidLoad];
 
     CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
-    CGFloat maxLabelWidth = screenWidth - 100; // Adjust the padding as needed
+    CGFloat maxLabelWidth = screenWidth - 80; // Adjust the padding as needed
 
     self.view.backgroundColor = [UIColor clearColor];
 
@@ -177,12 +179,22 @@
 
     // Create the modal view
     modalPadding = 25;
-    modalHeight = self.view.bounds.size.height / 2 - 75 + modalPadding;
-    modalY = self.view.bounds.size.height - modalHeight + modalPadding;
+    float paddingH = 48;
+    if(self.isModal){
+        modalHeight = self.view.bounds.size.height / 2 - 130 + modalPadding;
+    }else{
+        modalHeight = self.view.bounds.size.height / 2 - 75 + modalPadding;
+    }
+    if(self.isModal){
+        modalY = (self.view.bounds.size.height / 2) - (modalHeight / 2);
+    }else{
+        modalY = self.view.bounds.size.height - modalHeight + modalPadding;
+    }
+    CGFloat modalWidth = self.isModal ? self.view.bounds.size.width - paddingH : self.view.bounds.size.width;
+    CGFloat modalX = self.isModal ? paddingH / 2 : 0;
     
-
     self.modalView = [[UIView alloc]
-        initWithFrame:CGRectMake(0, modalY, self.view.bounds.size.width,
+        initWithFrame:CGRectMake(modalX, modalY, modalWidth,
                                  modalHeight)];
     
     self.modalView.backgroundColor = [UIColor whiteColor];
@@ -196,16 +208,6 @@
         self.modalView.userInteractionEnabled = YES;
         [self.modalView addGestureRecognizer:swipeRec];
     }
-
-//    UIBezierPath *maskPath = [UIBezierPath
-//        bezierPathWithRoundedRect:self.modalView.bounds
-//                byRoundingCorners:(UIRectCornerTopLeft | UIRectCornerTopRight)
-//                      cornerRadii:CGSizeMake(20.0, 20.0)];
-//    CAShapeLayer *maskLayer = [[CAShapeLayer alloc] init];
-//    maskLayer.frame = self.modalView.bounds;
-//    maskLayer.path = maskPath.CGPath;
-//    self.modalView.layer.mask = maskLayer;
-
     [self.view addSubview:self.modalView];
 
     [self.modalView addSubview:self.imageView];
@@ -278,7 +280,6 @@
     if (self.footerLogo != nil) {
         self.footerLogoImageView.image = self.footerLogo;
     }
-
     [NSLayoutConstraint activateConstraints:@[
         // Position imageView at the top center of the view
         [self.imageView.widthAnchor constraintEqualToConstant:60],
@@ -301,12 +302,12 @@
         // Position messageLabel below titleLabel with some spacing
         [self.messageLabel.topAnchor
             constraintEqualToAnchor:self.titleLabel.bottomAnchor
-                           constant:10],
+                           constant:0],
         [self.messageLabel.centerXAnchor
             constraintEqualToAnchor:self.modalView.centerXAnchor],
         [self.messageLabel.widthAnchor constraintEqualToConstant:maxLabelWidth],
         [self.messageLabel.heightAnchor
-            constraintEqualToConstant:messageLabelSize.height],
+            constraintEqualToConstant:self.isModal ? MAX_MESSAGE_HEIGHT - 20 : MAX_MESSAGE_HEIGHT],
     ]];
 
     [self.modalView addSubview:self.button];
@@ -319,8 +320,9 @@
         constraintEqualToAnchor:self.modalView.centerXAnchor]
         .active = YES;
     self.buttonBottomConstraint = [self.button.bottomAnchor
-        constraintEqualToAnchor:self.modalView.bottomAnchor
-                       constant:-70];
+        constraintEqualToAnchor:self.footerLogoImageView.topAnchor
+                       constant: -12];
+   // [self.button.topAnchor constraintEqualToAnchor:self.messageLabel.bottomAnchor constant:16].active = YES;
     self.buttonBottomConstraint.active = YES;
 
     // footerLogo
@@ -332,14 +334,14 @@
         constraintEqualToAnchor:self.modalView.centerXAnchor]
         .active = YES;
     
-    CGFloat bottomPadding = 23;
-    if(@available(iOS 11.0, *)){
-        UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
-        bottomPadding = window.safeAreaInsets.bottom;
+    CGFloat bottomPadding = 22;
+    if(!self.isModal){
+        if(@available(iOS 11.0, *)){
+            UIWindow *window = UIApplication.sharedApplication.windows.firstObject;
+            bottomPadding = window.safeAreaInsets.bottom;
+        }
+        bottomPadding+=16;
     }
-    bottomPadding+=10;
-    NSLog(@"%f", bottomPadding);
-    
     self.footerLogoBottomConstraint = [self.footerLogoImageView.bottomAnchor
         constraintEqualToAnchor:self.modalView.bottomAnchor
                        constant:-bottomPadding];
