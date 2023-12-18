@@ -34,7 +34,7 @@ zipStream.on('close', () => {
     contentType: 'application/zip',
   });
   axios
-    .post('http://192.168.1.92:3003/project/' + apiKey + '/bundle/', form, {
+    .post('http://192.168.1.92:3000/project/' + apiKey + '/bundle/', form, {
       headers: {
         'Content-Type': `multipart/form-data;`,
         //also add as data the bundleFileName
@@ -46,6 +46,8 @@ zipStream.on('close', () => {
         'Successfully uploaded bundle. Server responded with:'
         // res.data
       );
+      //remove the assets.zip file
+      fs.unlinkSync(zipPath);
     })
     .catch((error) => console.error('Error uploading bundle:', error));
 });

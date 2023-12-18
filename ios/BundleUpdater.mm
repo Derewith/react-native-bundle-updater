@@ -7,6 +7,7 @@
 #import <sys/utsname.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTReloadCommand.h>
+#include "SSZipArchive.h"
 
 
 @interface BundleUpdater()
@@ -41,7 +42,7 @@ RCT_EXPORT_MODULE()
 - (NSString *)apiUrl{
     //lazy initialization
     if(!_apiUrl){
-        _apiUrl = @"http://192.168.1.92:3003";
+        _apiUrl = @"http://192.168.1.92:3000";
     }
     return _apiUrl;
 }
@@ -106,7 +107,9 @@ RCT_EXPORT_MODULE()
                  andAssetsFiles:(NSArray*)assetsFiles
                  fromFolder:(NSString *)sourceFolder{
     NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-    
+    NSFileManager *manager = [NSFileManager defaultManager];
+
+    //bundle
     NSString *scriptPath = [documentsDirectory
         stringByAppendingPathComponent:@"main.jsbundle"];
     [script writeToFile:scriptPath atomically:YES];
@@ -120,18 +123,15 @@ RCT_EXPORT_MODULE()
     //assets
     NSString *assetsDirectory = [documentsDirectory stringByAppendingPathComponent:@"assets"];
     //check if the directory already exist
-    NSFileManager *manager = [NSFileManager defaultManager];
     if(![manager fileExistsAtPath:assetsDirectory]){
         [manager createDirectoryAtPath:assetsDirectory withIntermediateDirectories:YES attributes:nil error:nil];
     }
-    // Salva i file nella cartella "assets"
-    for (NSDictionary *fileObj in assetsFiles) {
-        NSString *fileName = fileObj[@"file"];
-        NSData *fileData = [[NSData alloc] initWithBase64EncodedString:fileObj[@"data"] options:NSDataBase64DecodingIgnoreUnknownCharacters];
-        
-        NSString *destinationPath = [assetsDirectory stringByAppendingPathComponent:fileName];
-        
-        [fileData writeToFile:destinationPath atomically:YES];
+    // Save the assets files in the assets directory
+    for (NSString *file in assetsFiles) {
+        NSString *filePath = [sourceFolder stringByAppendingPathComponent:file];
+        NSData *fileData = [NSData dataWithContentsOfFile:filePath];
+        NSString *destinationPath = [assetsDirectory stringByAppendingPathComponent:file];
+        [fileData writeToFile:destinationPath atomically:true];
     }
     NSLog(@"[SDK] bundle and assets saved on disk");
 }
@@ -215,20 +215,24 @@ RCT_EXPORT_MODULE()
  *  @param updateData - dictionary with the sheet config
  */
 - (void)showUpdateVC:(NSDictionary *)updateData withNecessaryUpdate:(BOOL)isNecessaryUpdate{
+    
+    NSLog(@"%@", updateData.description);
+    NSDictionary *config = updateData[@"configuration"];
+    NSDictionary *actionBtn = updateData[@"actionBtn"];
     // Set the data properties of the bottom sheet view controller
-    self.updaterVC.image = updateData[@"image"];
-    self.updaterVC.titleText = updateData[@"title"];
-    self.updaterVC.message = updateData[@"message"];
-    self.updaterVC.buttonLabel = updateData[@"button_label"];
-    self.updaterVC.buttonLink = updateData[@"button_label"];
-    self.updaterVC.buttonBackgroundColor = updateData[@"button_color"];
+    self.updaterVC.image = config[@"image"];
+    self.updaterVC.titleText = config[@"title"];
+    self.updaterVC.message = config[@"message"];
+    self.updaterVC.buttonLabel = actionBtn[@"label"];
+    self.updaterVC.buttonLink = actionBtn[@"label"];
+    self.updaterVC.buttonBackgroundColor = actionBtn[@"color"];
     self.updaterVC.buttonIcon = [UIImage imageNamed:@"button_icon"];
     self.updaterVC.footerLogo = [UIImage imageNamed:@"sdk_logo"];
     if(isNecessaryUpdate){
         self.updaterVC.isNecessaryUpdate = true;
     }
-    NSString *type = updateData[@"type"];
-    if([type isEqualToString:@"Notification"]){
+    NSString *type = config[@"type"];
+    if([type isEqualToString:@"notification"]){
         //TODO - pass config to the notification
         BundlerUpdaterNitificationVC *notificationVC = [BundlerUpdaterNitificationVC new];
         notificationVC.isNecessaryUpdate = isNecessaryUpdate;
@@ -245,7 +249,7 @@ RCT_EXPORT_MODULE()
         }else{
            NSLog(@"[SDK] It's NOT an UIViewController, display normal bottomsheet");
         }
-    }else if([type isEqualToString:@"Modal"]){
+    }else if([type isEqualToString:@"modal"]){
         self.updaterVC.isModal = true;
     }
     UIViewController *rootViewController =
@@ -482,55 +486,83 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
           NSURL *scriptURL = [NSURL URLWithString:url];
 
           NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-          [request setURL:scriptURL];
-          [request setHTTPMethod:@"POST"];
+            [request setURL:scriptURL];
+            [request setHTTPMethod:@"POST"];
 
-          // Set the appropriate headers for your request
-          [request setValue:@"application/json"
-              forHTTPHeaderField:@"Content-Type"];
-          [request setValue:@"Bearer <YOUR_AUTH_TOKEN>"
-              forHTTPHeaderField:@"Authorization"];
-            
+            // Set the appropriate headers for your request
+            [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+            [request setValue:@"Bearer <YOUR_AUTH_TOKEN>" forHTTPHeaderField:@"Authorization"];
+
             NSURLSession *session = [NSURLSession sharedSession];
-            NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-                if (error) {
-                  NSLog(@"Error: %@", error.localizedDescription);
-                  return;
-                }
-                NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
-                // NSLog(@"%ld",(long)res.statusCode);
-                if(res.statusCode == 200){
-                  NSError *jsonError;
-                  NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
-                  if (jsonError) {
-                      NSLog(@"Errore nella decodifica del JSON: %@", jsonError.localizedDescription);
-                      return;
-                  }
-                  // Estrai il bundle e la cartella "assets" dalla risposta JSON
-                    NSString *bundleName = responseDict[@"bundle"][@"file"];
-                    NSString *bundleContent = responseDict[@"bundle"][@"data"];
-                    NSData *bundleData = [[NSData alloc] initWithBase64EncodedString:bundleContent options:NSDataBase64DecodingIgnoreUnknownCharacters];
-                       
-                    // Calculate sha256 hash
-                    NSMutableData *hash =
-                        [self calculateSHA256Hash:bundleData];
-                    NSString *hashString =
-                        [hash base64EncodedStringWithOptions:0];
-                    // Load hash from disk - For now removed
-//                    NSString *oldHash = [self loadHashFromDisk];
-//                    NSLog(@"[SDK] OLDHASH: %@", oldHash);
-//                    NSLog(@"[SDK] NEWHAS: %@", hashString);
-//                    if (![hashString isEqualToString:oldHash]) {
-                  
-                  //ASSETS
-                  NSString *assetsFolderPath = responseDict[@"assetsFolder"][@"path"];
-                  NSArray *assetsFiles = responseDict[@"assetsFolder"][@"files"];
-                  [self saveNewBundle:bundleData andHashString:hashString andAssetsFiles:assetsFiles fromFolder:assetsFolderPath];
-                  [self reload];
-//                    }else{
-//                        NSLog(@"[SDK] BUNDLE IS UP TO DATE");
-//                    }
-                 
+            NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
+                   if (error) {
+                       NSLog(@"Error: %@", error.localizedDescription);
+                       return;
+                   }
+                   NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
+                   if (res.statusCode == 200) {
+                       // Get the documents directory
+                       NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+                       NSString *documentsDirectory = [paths objectAtIndex:0];
+                       NSString *zipFilePath = [documentsDirectory stringByAppendingPathComponent:@"bundle.zip"];
+
+                       //remove the old zip file if there is
+                        NSFileManager *manager = [NSFileManager defaultManager];
+                        if([manager fileExistsAtPath:zipFilePath]){
+                            [manager removeItemAtPath:zipFilePath error:nil];
+                        }
+                        
+                       // Move from the cache to the documents directory
+                       [[NSFileManager defaultManager] moveItemAtURL:location toURL:[NSURL fileURLWithPath:zipFilePath] error:nil];
+
+                       // Unzip
+                       NSString *destinationFolderPath = [documentsDirectory stringByAppendingPathComponent:@"unzipped"];
+
+                        //check if the directory already exist and delete it and all the files inside
+                        if([manager fileExistsAtPath:destinationFolderPath]){
+                            [manager removeItemAtPath:destinationFolderPath error:nil];
+                        }
+
+                       BOOL success = [SSZipArchive unzipFileAtPath:zipFilePath toDestination:destinationFolderPath];
+                       if (success) {
+                           NSLog(@"Unzipping successful!");
+                            //Log all the file in the destinationFolderPath
+                            NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:destinationFolderPath error:nil];
+                            // NSLog(@"[SDK] Unzipped files: %@", contents.description);
+
+                           //retrieve the name of the bundle from the Content-disposition header
+                            NSString *contentDisposition = [[res allHeaderFields] valueForKey:@"Content-disposition"];
+                           // split the filename
+                            NSArray *contentDispositionArray = [contentDisposition componentsSeparatedByString:@"="];   
+                            NSString *bundleName = [contentDispositionArray lastObject];
+                            NSLog(@"[SDK] bundle name: %@", bundleName);
+                            NSData *bundleData = [NSData dataWithContentsOfFile:[destinationFolderPath stringByAppendingPathComponent:bundleName]];
+                            // Calculate sha256 hash
+                            NSMutableData *hash =
+                                [self calculateSHA256Hash:bundleData];
+                            NSString *hashString =
+                                [hash base64EncodedStringWithOptions:0];
+                            //retrieve the assets files - remove the bundle file
+                            NSMutableArray *assetsFiles = [NSMutableArray new];
+                            for (NSString *file in contents) {
+                                if(![file isEqualToString:bundleName]){
+                                    [assetsFiles addObject:file];
+                                }
+                            }
+                            //check if bundle data is not empty
+                            if(bundleData.length == 0){
+                                NSLog(@"[SDK] bundle data is empty");
+                                //TODO - close the sheet 
+                                return;
+                            }
+
+                            
+                          [self saveNewBundle:bundleData andHashString:hashString andAssetsFiles:assetsFiles fromFolder:destinationFolderPath];
+                          [self clearDocumentsFolder];
+                          [self reload];
+                       } else {
+                           NSLog(@"Unzipping failed!");
+                       }
                 }else if(res.statusCode == 404){
                     //TODO
                 }else {
@@ -558,7 +590,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                         repeats:NO];
                 });
             }];
-          [task resume];
+          [downloadTask resume];
         });
 }
 
@@ -571,6 +603,24 @@ RCT_EXPORT_METHOD(reload) {
     });
 }
 
+/*!
+ * @brief clear the documents folder from files that are not intended to be there
+ */
+- (void)clearDocumentsFolder{
+    NSArray *dirs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true);
+    NSArray *documents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dirs.firstObject error:nil];
+    NSString *documentPath = dirs.firstObject;
+    NSFileManager *defManager = [NSFileManager defaultManager];
+    for (NSString *document in documents){
+        if(!([document isEqualToString:@"main.jsbundle"] || [document isEqualToString:@"assets"]  || [document isEqualToString:@"main.jsbundle.sha256"])){
+            NSString *path = [documentPath stringByAppendingPathComponent:document];
+            [defManager removeItemAtPath:path error:nil];
+        }
+    }
+}
+
+
+
 // Don't compile this code when we build for the old architecture.
 #ifdef RCT_NEW_ARCH_ENABLED
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
@@ -579,6 +629,7 @@ RCT_EXPORT_METHOD(reload) {
         params);
 }
 #endif
+
 
 
 #pragma mark - TO IMPLEMENT:
