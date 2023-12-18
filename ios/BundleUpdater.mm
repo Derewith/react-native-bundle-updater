@@ -216,7 +216,6 @@ RCT_EXPORT_MODULE()
  */
 - (void)showUpdateVC:(NSDictionary *)updateData withNecessaryUpdate:(BOOL)isNecessaryUpdate{
     
-    NSLog(@"%@", updateData.description);
     NSDictionary *config = updateData[@"configuration"];
     NSDictionary *actionBtn = updateData[@"actionBtn"];
     // Set the data properties of the bottom sheet view controller
@@ -333,14 +332,15 @@ RCT_EXPORT_MODULE()
 //     MARK: - TO TEST THE MODAL
 //     dispatch_async(dispatch_get_main_queue(), ^{
 //        [self showUpdateVC:@{
-//            @"button_color": @"#FF1542",
-//            @"button_label": @"Aggiorna ora",
-//            @"button_link" : @"https://xylem.com",
-//            @"image" : @"https://i.ibb.co/ngTj6wc/xylem-italia-logo.jpg",
-//            @"message": @"Per continuare a utilizzare Xylem X, aggiorna per le ultime funzionalita e correzioni di bug.",
-//            @"privacy": @"https://develondigital.com",
-//            @"title": @"Aggiornamento disponibile!"
-//       }];
+//            @"configuration": @{
+//                @"image": @"https://i.ibb.co/ngTj6wc/xylem-italia-logo.jpg",
+//                @"title": @"Aggiornamento disponibile",
+//                @"message": @"Per continuare a utilizzare Xylem X, aggiorna per le ultime funzionalita e correzioni di bug.",
+//            },
+//            @"actionBtn": @{
+//                @"label": @"Aggiorna ora"
+//            },
+//       } withNecessaryUpdate:false];
 //    });
 // MARK: - to test the notification
 //    AlertViewTest *alertVC = [AlertViewTest new];
@@ -391,7 +391,6 @@ RCT_EXPORT_MODULE()
 //                NSLog(@"%@", [responseDict valueForKey:@"update_required"]);
                 id updateRequiredValue = [responseDict valueForKey:@"update_required"];
                 if (updateRequiredValue != nil) {
-                    NSLog(@"Update required %@", updateRequiredValue ? @"YES": @"NO");
                     if([updateRequiredValue isKindOfClass:[NSNumber class]]){
                        // update not required
                     }else{
@@ -581,8 +580,10 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                 // update done or not - dismiss bottomsheet
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [UIView animateWithDuration:0.2 animations:^{
+                        self.updaterVC.loadingView.alpha = 0;
                         self.updaterVC.backgroundView.alpha = 0;
                     }];
+                    [self.updaterVC.spinner stopAnimating];
                 [NSTimer scheduledTimerWithTimeInterval:0.2
                         target:self
                         selector:@selector(hideBottomSheet)

@@ -50,11 +50,12 @@
 }
 
 - (void)reloadApp:(UIButton *)sender {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.spinner startAnimating];
+        self.loadingView.alpha = 1;
+    });
     BundleUpdater *sharedInstance = [BundleUpdater sharedInstance];
     [sharedInstance checkAndReplaceBundle:nil];
-    // [sharedInstance reload];
-    // hide the modal
-    //[self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)hideBottomSheet {
@@ -165,6 +166,15 @@
     self.button.translatesAutoresizingMaskIntoConstraints = NO;
     self.button.userInteractionEnabled = YES;
 
+    //create the loading view
+    self.loadingView = [[UIView alloc] initWithFrame:self.view.bounds];
+    self.loadingView.backgroundColor = [UIColor whiteColor];
+    self.loadingView.alpha = 0;
+    self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    self.spinner.center = self.loadingView.center;
+    [self.loadingView addSubview:self.spinner];
+    
+    [self.view addSubview: self.loadingView];
     // Create the background view
     self.backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
     self.backgroundView.backgroundColor = [UIColor blackColor];
@@ -176,7 +186,7 @@
         [self.backgroundView addGestureRecognizer:tapGesture];
     }
     [self.view addSubview:self.backgroundView];
-
+    
     // Create the modal view
     modalPadding = 25;
     float paddingH = 48;
