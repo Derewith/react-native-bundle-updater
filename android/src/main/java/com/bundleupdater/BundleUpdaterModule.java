@@ -6,20 +6,17 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import androidx.annotation.NonNull;
-
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.bridge.LifecycleEventListener;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import com.jakewharton.processphoenix.ProcessPhoenix;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -27,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -36,17 +32,33 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-
 @ReactModule(name = "BundleUpdaterModule")
 public class BundleUpdaterModule extends ReactContextBaseJavaModule {
 
+  // private static BundleUpdaterModule instance;
+
   public static final String NAME = "BundleUpdater";
-  private final String _apiUrl = "http://192.168.1.136:3003/";
+  private final String _apiUrl = "http://192.168.1.136:3003";
+  private boolean isRecreating = false;
 
   public BundleUpdaterModule(ReactApplicationContext context) {
     super(context);
     DataStorePreferenceRepository.init(context);
+    // instance = this;
   }
+
+  // public static BundleUpdaterModule getInstance(
+  //   ReactApplicationContext context
+  // ) {
+  //   if (instance == null) {
+  //     instance = new BundleUpdaterModule(context);
+  //   }
+  //   return instance;
+  // }
+
+  // public static BundleUpdaterModule getInstance() {
+  //   return instance;
+  // }
 
   @Override
   @NonNull
@@ -55,7 +67,6 @@ public class BundleUpdaterModule extends ReactContextBaseJavaModule {
   }
 
   /** INIT CORE SDK */
-  @ReactMethod
   public void checkAndReplaceBundle(String apiKey) {
     new Thread(() -> {
       try {
@@ -93,77 +104,104 @@ public class BundleUpdaterModule extends ReactContextBaseJavaModule {
       .start();
   }
 
-  @ReactMethod
-  public String initialization(String apiKey) {
-    String savedBundle = DataStorePreferenceRepository.getBundleId();
-
-    String urlString = _apiUrl + "/project/" + apiKey + "/initialize";
-
-    JsonObject body = new JsonObject();
-
-    // TODO add log things
-    // body.addProperty("metaData", getMetaData());
-    body.addProperty("bundleId", savedBundle);
-
-    try {
-      String jsonBody = new Gson().toJson(body);
-      RequestBody requestBody = RequestBody.create(
-        MediaType.parse("application/json"),
-        jsonBody
-      );
-      Request request = new Request.Builder()
-        .url(urlString)
-        .post(requestBody)
-        .build();
-
-      OkHttpClient client = new OkHttpClient();
-      client
-        .newCall(request)
-        .enqueue(
-          new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-              Log.e("SDK", "Initialization error: " + e.getMessage());
-              // promise.reject("INITIALIZATION_ERROR", e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response)
-              throws IOException {
-              if (response.isSuccessful()) {
-                String responseData = response.body().string();
-                Log.d("SDK", "Initialization response: " + responseData);
-                JsonObject responseJson = new Gson()
-                  .fromJson(responseData, JsonObject.class);
-                JsonElement updateRequiredValue = responseJson.get(
-                  "update_required"
-                );
-                if (updateRequiredValue != null) {
-                  if (updateRequiredValue.isJsonPrimitive()) {
-                    // promise.resolve("Update not required");
-                  } else {
-                    DataStorePreferenceRepository.setBundleId(responseJson.get("bundleId").getAsString());
-
-                    // showBottomSheet(updateRequiredValue);
-                    Log.e("SDK", "WE SHOULD SHOW THE BOTTOM SHEET ");
-                    // promise.resolve("Update required");
-                  }
-                }
-              } else {
-                Log.e("SDK", "Initialization error: " + response.message());
-                // promise.reject("INITIALIZATION_ERROR", response.message());
-              }
-            }
-          }
-        );
-    } catch (Exception e) {
-      Log.e("SDK", "JSON serialization error: " + e.getMessage());
-      // promise.reject("JSON_SERIALIZATION_ERROR", e.getMessage());
-    }
-    return null;
+  private void showBottomSheet() {
+    var context = getReactApplicationContext();
+    //.runOnUiQueueThread();
+    BundleUpdaterBottomSheetViewController bottomSheet = new BundleUpdaterBottomSheetViewController(
+      context
+    );
+    bottomSheet.show();
   }
 
-  public void initializeBundle(String key) {}
+  @ReactMethod
+  public void initialization(String apiKey, Promise promise) {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+      String savedBundle = DataStorePreferenceRepository.getBundleId();
+      String urlString = _apiUrl + "/project/" + apiKey + "/initialize";
+      JsonObject body = new JsonObject();
+
+      Log.d("SDK", urlString);
+      // TODO add log things
+      // body.addProperty("metaData", getMetaData());
+      body.addProperty("bundleId", savedBundle);
+
+      try {
+        String jsonBody = new Gson().toJson(body);
+        RequestBody requestBody = RequestBody.create(
+          MediaType.parse("application/json"),
+          jsonBody
+        );
+        Request request = new Request.Builder()
+          .url(urlString)
+          .post(requestBody)
+          .build();
+
+        OkHttpClient client = new OkHttpClient();
+        client
+          .newCall(request)
+          .enqueue(
+            new Callback() {
+              @Override
+              public void onFailure(Call call, IOException e) {
+                Log.e("SDK", "Initialization error: " + e.getMessage());
+                promise.reject("INITIALIZATION_ERROR", e.getMessage());
+              }
+
+              @Override
+              public void onResponse(Call call, Response response)
+                throws IOException {
+                if (response.isSuccessful()) {
+                  String responseData = response.body().string();
+                  Log.d("SDK", "Initialization response: " + responseData);
+                  JsonObject responseJson = new Gson()
+                    .fromJson(responseData, JsonObject.class);
+                  JsonElement updateRequiredValue = responseJson.get(
+                    "update_required"
+                  );
+                  if (updateRequiredValue != null) {
+                    if (updateRequiredValue.isJsonPrimitive()) {
+                      promise.resolve("Update not required");
+                    } else {
+                      DataStorePreferenceRepository.setBundleId(
+                        responseJson.get("bundleId").getAsString()
+                      );
+
+                      // showBottomSheet(updateRequiredValue);
+                      Log.e("SDK", "WE SHOULD SHOW THE BOTTOM SHEET ");
+                      showBottomSheet();
+                      promise.resolve("Update required");
+                    }
+                  }
+                } else {
+                  Log.e("SDK", "Initialization error: " + response.message());
+                  promise.reject("INITIALIZATION_ERROR", response.message());
+                }
+              }
+            }
+          );
+      } catch (Exception e) {
+        Log.e("SDK", "JSON serialization error: " + e.getMessage());
+        promise.reject("JSON_SERIALIZATION_ERROR", e.getMessage());
+      }
+    } else {
+      promise.reject("Error", "Android version not supported");
+    }
+  }
+
+  // public CompletableFuture<String> initialization(String apiKey) {
+  //   CompletableFuture<String> future = null;
+  //   if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+  //     future = new CompletableFuture<>();
+  //     try {
+  //       // Your initialization logic here
+  //       String result = "Initialization success";
+  //       future.complete(result);
+  //     } catch (Exception e) {
+  //       future.completeExceptionally(e);
+  //     }
+  //   }
+  //   return future;
+  // }
 
   private String hash(byte[] bytes) throws NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -190,6 +228,7 @@ public class BundleUpdaterModule extends ReactContextBaseJavaModule {
       new Runnable() {
         @Override
         public void run() {
+          isRecreating = true;
           currentActivity.recreate();
         }
       }
@@ -197,6 +236,10 @@ public class BundleUpdaterModule extends ReactContextBaseJavaModule {
   }
 
   private void loadBundle() {
+    if (isRecreating) {
+      // The activity is being recreated, don't perform operations on it
+      return;
+    }
     clearLifecycleEventListener();
     try {
       final ReactInstanceManager instanceManager = resolveInstanceManager();

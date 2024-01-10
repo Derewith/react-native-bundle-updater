@@ -31,3 +31,7 @@ export async function checkAndReplaceBundle(apiKey: string): Promise<void> {
 export async function restart(): Promise<void> {
   await BundleUpdater.restart();
 }
+
+export async function initialization(apiKey: string): Promise<void> {
+  await BundleUpdater.initialization(apiKey);
+}

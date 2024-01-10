@@ -2,9 +2,14 @@
 import * as React from 'react';
 import { StyleSheet, Button, Text, ImageBackground } from 'react-native';
 // import { restart } from 'react-native-bundle-updater';
-import { restart } from '../../src';
+import { restart, initialization } from '../../src';
 
 export default function App() {
+  React.useEffect(() => {
+    initialization('9980a7943e0db5892b50f6972b02b4c2a2b3')
+      .then(() => console.log('Initialization successful'))
+      .catch((error) => console.error('Initialization failed', error));
+  }, []);
   const handleReload = async () => {
     try {
       await restart();
