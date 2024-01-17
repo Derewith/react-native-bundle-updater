@@ -17,13 +17,13 @@ import something from 'react-native-bundle-updater';
 and then run:
 
 ```sh
-bun upload:dev folderOfJSBundle assetsGeneratedFolder  apiKey
+bun upload:dev folderOfJSBundle assetsGeneratedFolder apiKey branch version
 ```
 
 Example:
 
 ```sh
-bun upload:dev ./example/ios/main.jsbundle ./example/ios/assets  31ad196f026d0b07b7dffe9019f708955c13
+bun upload:dev ./example/ios/main.jsbundle ./example/ios/assets  31ad196f026d0b07b7dffe9019f708955c13 master 1.0.0
 ```
 
 ## Contributing

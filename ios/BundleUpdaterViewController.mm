@@ -51,6 +51,8 @@
 
 - (void)reloadApp:(UIButton *)sender {
     dispatch_async(dispatch_get_main_queue(), ^{
+        // TODO - understand if the view must be shown ony while bundle is reloading
+        // or even when the app is checking for bundle to update and the user needs to press the button
         [self.spinner startAnimating];
         self.loadingView.alpha = 1;
     });

@@ -15,6 +15,7 @@
 // useful when need of getter and setter by default
     @property (nonatomic, strong) NSString *apiUrl;
     @property (nonatomic, strong) NSString *bundle_id_from_api;
+    @property (nonatomic, strong) NSString *branch;
     @property (nonatomic, strong) BundleUpdaterViewController *updaterVC;
 @end
 
@@ -195,7 +196,7 @@ RCT_EXPORT_MODULE()
         @"buildVersionNumber" : marketingVersion,
         @"releaseVersionNumber" : projectVersion,
         @"preferredUserLocale" : preferredUserLocale,
-        @"sdkVersion" : @"ALPHA-", // SDK_VERSION",
+        @"sdkVersion" : @"ALPHA-1", // SDK_VERSION",
         @"buildMode" : buildMode,
         @"batteryLevel" : batteryLevel,
         //        @"phoneChargingStatus" : phoneChargingState,
@@ -276,12 +277,11 @@ RCT_EXPORT_MODULE()
  *  @param apiKey - the apiKey for the app
  */
 - (void)initialization:(NSString *)apiKey
+              withBranch:(NSString *)branch
                resolve:(void (^)(NSString *))resolve
                 reject:(void (^)(NSString *, NSString *, NSError *))reject {
-    // TODO fix Conflicting parameter types in implementation of
-    // 'initialization:resolve:reject:': 'void (^__strong)(NSString *__strong)'
-    // vs '__strong RCTPromiseResolveBlock' (aka 'void (^__strong)(__strong
-    // id)')
+    [self setBranch:branch];
+    //check saved bundle
     NSString *savedBundle = [[NSUserDefaults standardUserDefaults]
         stringForKey:@"bundleId"];
     NSString *oldKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
@@ -298,14 +298,14 @@ RCT_EXPORT_MODULE()
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     [request setURL:[NSURL URLWithString:urlString]];
     [request setHTTPMethod:@"POST"];
-
-    // Create a dictionary to hold the field values
-//    NSDictionary *fields = [[NSMutableDictionary alloc]
-//        initWithDictionary:@{@"metaData" : [self getMetaData]}];
+    //Version is taken by the info.plist eg. 1.0.0
+    NSString *appVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     NSDictionary *body = [[NSMutableDictionary alloc]
         initWithDictionary:@{
             @"metaData" : [self getMetaData],
-            @"bundleId" : savedBundle ? savedBundle : @""
+            @"bundleId" : savedBundle ? savedBundle : @"",
+            @"version": appVersionString,
+            @"branch": branch
         }];
     NSError *jsonError;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:body
@@ -476,6 +476,19 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
           // get the saved api key
           NSString *_key = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
           NSString *keyToUse = apiKey ? apiKey : _key;
+          NSString *appVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+            NSDictionary *body = @{
+                @"version": appVersionString,
+                @"branch": self.branch
+            };
+            NSError *jsonError;
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:body
+                                                               options:0
+                                                                 error:&jsonError];
+            if (!jsonData) {
+                NSLog(@"[SDK] JSON serialization error: %@", jsonError);
+                return;
+            }
           // Fetch script from server
           NSString *url = [NSString
               stringWithFormat:@"%@/project/%@/bundle", self.apiUrl, keyToUse];
@@ -490,7 +503,8 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
 
             // Set the appropriate headers for your request
             [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-            [request setValue:@"Bearer <YOUR_AUTH_TOKEN>" forHTTPHeaderField:@"Authorization"];
+            [request setHTTPBody:jsonData];
+            //[request setValue:@"Bearer <YOUR_AUTH_TOKEN>" forHTTPHeaderField:@"Authorization"];
 
             NSURLSession *session = [NSURLSession sharedSession];
             NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
@@ -551,7 +565,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                             //check if bundle data is not empty
                             if(bundleData.length == 0){
                                 NSLog(@"[SDK] bundle data is empty");
-                                //TODO - close the sheet 
+                                [self hideBottomSheet];
                                 return;
                             }
 

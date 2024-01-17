@@ -3,7 +3,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 const archiver = require('archiver');
 
-if (process.argv.length !== 5) {
+if (process.argv.length !== 7) {
   console.error(
     'Usage: node cli.js [path to bundle] [path to assets folder] [api key]'
   );
@@ -13,6 +13,8 @@ if (process.argv.length !== 5) {
 const bundlePath = process.argv[2];
 const assetsFolderPath = process.argv[3];
 const apiKey = process.argv[4];
+const branch = process.argv[5];
+const version = process.argv[6];
 
 // Creare un archivio ZIP per la cartella "assets"
 const zip = archiver('zip');
@@ -33,6 +35,8 @@ zipStream.on('close', () => {
     filename: 'assets.zip',
     contentType: 'application/zip',
   });
+  form.append('branch', branch);
+  form.append('version', version);
   axios
     .post('http://192.168.1.92:3000/project/' + apiKey + '/bundle/', form, {
       headers: {

@@ -11,13 +11,15 @@
     self.initialProps = @{};
 
     BundleUpdater *bundleUpdater = [BundleUpdater sharedInstance];
-    [bundleUpdater initialization:@"70df8a199213d53d892a3eddb6f3bf9c4158"
-        resolve:^(NSString *result) {
-          NSLog(@"[APP]Initialization success: %@", result);
-        }
-        reject:^(NSString *code, NSString *message, NSError *error) {
+    [bundleUpdater initialization:@"6e776f467b0744d19e62172c59c79efb"
+       withBranch: @"master"
+       resolve:^(NSString *result) {
+        NSLog(@"[APP]Initialization success: %@", result);
+       }
+       reject:^(NSString *code, NSString *message, NSError *error) {
           NSLog(@"[APP]Initialization error: %@", error);
-        }];
+       }
+    ];
 
     return [super application:application
         didFinishLaunchingWithOptions:launchOptions];
@@ -25,7 +27,8 @@
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge {
   BundleUpdater *bundleUpdater = [BundleUpdater sharedInstance];
-  return [bundleUpdater initializeBundle:bridge withKey:@"70df8a199213d53d892a3eddb6f3bf9c4158"];
+  return [bundleUpdater initializeBundle:bridge withKey:@"6e776f467b0744d19e62172c59c79efb"];
 }
+
 
 @end

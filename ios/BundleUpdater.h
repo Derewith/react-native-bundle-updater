@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
     @interface BundleUpdater : NSObject <RCTBridgeModule, UIViewControllerTransitioningDelegate>
     + (instancetype)sharedInstance;
     - (void)initialization:(NSString *)apiKey
+                withBranch:(NSString *)branch
                 resolve:(void (^)(NSString *))resolve
                     reject:(void (^)(NSString *, NSString *, NSError *))reject;
     - (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key;
