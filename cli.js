@@ -16,11 +16,16 @@ const apiKey = process.argv[4];
 const branch = process.argv[5];
 const version = process.argv[6];
 
+// remove from the assets folder the node_modules folder if it exists
+if (fs.existsSync(assetsFolderPath + '/node_modules'))
+  fs.rmdirSync(assetsFolderPath + '/node_modules', { recursive: true });
+
 // Creare un archivio ZIP per la cartella "assets"
 const zip = archiver('zip');
 const zipPath = 'assets.zip';
 const zipStream = fs.createWriteStream(zipPath);
 zip.pipe(zipStream);
+
 zip.directory(assetsFolderPath, false);
 zip.finalize();
 

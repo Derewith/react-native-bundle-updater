@@ -128,13 +128,49 @@ RCT_EXPORT_MODULE()
         [manager createDirectoryAtPath:assetsDirectory withIntermediateDirectories:YES attributes:nil error:nil];
     }
     // Save the assets files in the assets directory
-    for (NSString *file in assetsFiles) {
-        NSString *filePath = [sourceFolder stringByAppendingPathComponent:file];
-        NSData *fileData = [NSData dataWithContentsOfFile:filePath];
-        NSString *destinationPath = [assetsDirectory stringByAppendingPathComponent:file];
-        [fileData writeToFile:destinationPath atomically:true];
-    }
+   [self copyFilesFromSource:sourceFolder toDestination:assetsDirectory];
     NSLog(@"[SDK] bundle and assets saved on disk");
+    // log the directory folder content
+    NSLog(@"[SDK] content of the document folder %@", [manager contentsOfDirectoryAtPath:documentsDirectory error:nil]);
+    NSLog(@"[SDK] content of the assets folder %@", [manager contentsOfDirectoryAtPath:assetsDirectory error:nil]);
+
+}
+
+- (void)copyFilesFromSource:(NSString *)sourceFolder toDestination:(NSString *)destinationFolder {
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSError *error;
+
+    NSArray *contents = [manager contentsOfDirectoryAtPath:sourceFolder error:&error];
+
+    if (error) {
+        NSLog(@"Error reading contents of directory %@: %@", sourceFolder, [error localizedDescription]);
+        return;
+    }
+
+    for (NSString *file in contents) {
+        NSString *sourceFilePath = [sourceFolder stringByAppendingPathComponent:file];
+        NSString *destinationFilePath = [destinationFolder stringByAppendingPathComponent:file];
+
+        BOOL isDir;
+        BOOL fileExistsAtPath = [manager fileExistsAtPath:sourceFilePath isDirectory:&isDir];
+
+        if (fileExistsAtPath) {
+            if (isDir) {
+                // It's a directory, create it in the destination
+                [manager createDirectoryAtPath:destinationFilePath withIntermediateDirectories:YES attributes:nil error:nil];
+
+                // Recursively copy the contents of the subdirectory
+                [self copyFilesFromSource:sourceFilePath toDestination:[destinationFolder stringByAppendingPathComponent:file]];
+            } else {
+                //NSLog(@"Copying to the destination: %@", destinationFilePath);
+                // It's a file, copy it to the destination
+                NSData *fileData = [NSData dataWithContentsOfFile:sourceFilePath];
+                [fileData writeToFile:destinationFilePath atomically:YES];
+            }
+        }
+    }
+    //Log the content of the destination folder
+    NSLog(@"[SDK] content of the %@ folder %@", sourceFolder, [manager contentsOfDirectoryAtPath:destinationFolder error:nil]);
 }
 
 /*!
@@ -572,7 +608,9 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                             
                           [self saveNewBundle:bundleData andHashString:hashString andAssetsFiles:assetsFiles fromFolder:destinationFolderPath];
                           [self clearDocumentsFolder];
+                          [self clearAssetsFolder];
                           [self reload];
+                          NSLog(@"[SDK] Content of the Documents folder after cleaning %@")
                        } else {
                            NSLog(@"Unzipping failed!");
                        }
@@ -627,11 +665,17 @@ RCT_EXPORT_METHOD(reload) {
     NSString *documentPath = dirs.firstObject;
     NSFileManager *defManager = [NSFileManager defaultManager];
     for (NSString *document in documents){
-        if(!([document isEqualToString:@"main.jsbundle"] || [document isEqualToString:@"assets"]  || [document isEqualToString:@"main.jsbundle.sha256"])){
+        //TODO - capire come pulire, potrebbero esserci altre librerie oltre a mmkv che creano un file es: realm
+        // Cambiare quindi metodo di pulizia
+        if(!([document isEqualToString:@"main.jsbundle"] || [document isEqualToString:@"assets"]  || [document isEqualToString:@"main.jsbundle.sha256"] || [document isEqualToString:@"mmkv"])){
             NSString *path = [documentPath stringByAppendingPathComponent:document];
             [defManager removeItemAtPath:path error:nil];
         }
     }
+}
+
+-(void)clearAssetsFolder{
+   // TODO - mantain only files that has been passed in the zip with the same structure
 }
 
 
