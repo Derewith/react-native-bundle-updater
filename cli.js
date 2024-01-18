@@ -3,18 +3,16 @@ const fs = require('fs');
 const FormData = require('form-data');
 const archiver = require('archiver');
 
-if (process.argv.length !== 7) {
-  console.error(
-    'Usage: node cli.js [path to bundle] [path to assets folder] [api key]'
-  );
+if (process.argv.length !== 5) {
+  console.error('Usage: node cli.js [apiKey] [branch] [version]\n');
   process.exit(1);
 }
 
-const bundlePath = process.argv[2];
-const assetsFolderPath = process.argv[3];
-const apiKey = process.argv[4];
-const branch = process.argv[5];
-const version = process.argv[6];
+const bundlePath = './ios/main.jsbundle';
+const assetsFolderPath = './ios/assets';
+const apiKey = process.argv[2];
+const branch = process.argv[3];
+const version = process.argv[4];
 
 // remove from the assets folder the node_modules folder if it exists
 if (fs.existsSync(assetsFolderPath + '/node_modules'))
@@ -56,7 +54,12 @@ zipStream.on('close', () => {
         // res.data
       );
       //remove the assets.zip file
-      fs.unlinkSync(zipPath);
+      if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
+      //remove the assets folder
+      if (fs.existsSync(assetsFolderPath))
+        fs.rmdirSync(assetsFolderPath, { recursive: true });
+      //remove the bundle
+      if (fs.existsSync(bundlePath)) fs.unlinkSync(bundlePath);
     })
     .catch((error) => console.error('Error uploading bundle:', error));
 });

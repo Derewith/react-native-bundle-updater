@@ -34,7 +34,8 @@
     "prepare": "bob build",
     "release": "release-it",
     "upload": "node cli.js",
-    "upload:dev": "cd example && npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios --minify true && cd .. && node cli.js"
+    "upload:dev": "cd example && npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios --minify true && cd .. && node cli.js",
+    "upload:prod": "cd .. && cd .. && npx react-native bundle --entry-file index.js --platform ios --dev false --bundle-output ios/main.jsbundle --assets-dest ios --minify true && node ./node_modules/react-native-bundle-updater/cli.js"
   },
   "keywords": [
     "react-native",
@@ -43,6 +44,7 @@
   ],
   "repository": "https://github.com/Derewith/react-native-bundle-updater",
   "author": "Jonathan Canevese <ironigna7@gmail.com> (https://github.com/Derewith)",
+  "coAuthor:": "Giulio Milani <giulio.milani99@gmail.com> (https://githu.com/Giulio987)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Derewith/react-native-bundle-updater/issues"
@@ -147,5 +149,6 @@
   "dependencies": {
     "archiver": "^6.0.1",
     "axios": "^1.5.1"
-  }
+  },
+  "bin": "./bin.js"
 }

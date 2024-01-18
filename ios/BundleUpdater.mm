@@ -610,7 +610,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                           [self clearDocumentsFolder];
                           [self clearAssetsFolder];
                           [self reload];
-                          NSLog(@"[SDK] Content of the Documents folder after cleaning %@")
+                          // NSLog(@"[SDK] Content of the Documents folder after cleaning %@");
                        } else {
                            NSLog(@"Unzipping failed!");
                        }
