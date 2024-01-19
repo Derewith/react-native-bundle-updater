@@ -14,12 +14,22 @@ const options = yargs
     type: 'string',
     default: '',
   })
+  .option('e', {
+    alias: 'example',
+    describe: 'Is this the example project?',
+    type: 'boolean',
+    default: false,
+  })
   .demandCommand(3, 'You must specify apiKey, branch e version')
   .help('h')
   .alias('h', 'help').argv;
 
-const bundlePath = './ios/main.jsbundle';
-const assetsFolderPath = './ios/assets';
+const bundlePath = options.example
+  ? './example/ios/main.jsbundle'
+  : './ios/main.jsbundle';
+const assetsFolderPath = options.example
+  ? './example/ios/assets'
+  : './ios/assets';
 const apiKey = options._[0];
 const branch = options._[1];
 const version = options._[2];
@@ -73,17 +83,12 @@ zipStream.on('close', () => {
         'Successfully uploaded bundle.'
         // res.data
       );
-      //remove the assets.zip file
-      if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
-      //remove the assets folder
-      if (fs.existsSync(assetsFolderPath))
-        fs.rmdirSync(assetsFolderPath, { recursive: true });
-      //remove the bundle
-      if (fs.existsSync(bundlePath)) fs.unlinkSync(bundlePath);
+      cleanUp();
       process.exit(0);
     })
     .catch((error) => {
       console.error('Error uploading bundle:', error);
+      cleanUp();
       process.exit(1);
     });
 });
@@ -98,4 +103,14 @@ function generateRandomString(length) {
   }
 
   return randomString;
+}
+
+function cleanUp() {
+  //remove the assets.zip file
+  if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
+  //remove the assets folder
+  if (fs.existsSync(assetsFolderPath))
+    fs.rmdirSync(assetsFolderPath, { recursive: true });
+  //remove the bundle
+  if (fs.existsSync(bundlePath)) fs.unlinkSync(bundlePath);
 }
