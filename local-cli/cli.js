@@ -1,18 +1,35 @@
+#!/usr/bin/env node
+
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
 const archiver = require('archiver');
+const yargs = require('yargs');
 
-if (process.argv.length !== 5) {
-  console.error('Usage: node cli.js [apiKey] [branch] [version]\n');
-  process.exit(1);
-}
+const options = yargs
+  .usage('Usage: node cli.js [options] <apiKey> <branch> <version>')
+  .option('m', {
+    alias: 'comment',
+    describe: 'Add a comment to the bundle (optional)',
+    type: 'string',
+    default: '',
+  })
+  .demandCommand(3, 'You must specify apiKey, branch e version')
+  .help('h')
+  .alias('h', 'help').argv;
 
 const bundlePath = './ios/main.jsbundle';
 const assetsFolderPath = './ios/assets';
-const apiKey = process.argv[2];
-const branch = process.argv[3];
-const version = process.argv[4];
+const apiKey = options._[0];
+const branch = options._[1];
+const version = options._[2];
+const comment = options.comment;
+
+// check if the bundle file and the assets folder exist
+if (!fs.existsSync(bundlePath) || !fs.existsSync(assetsFolderPath)) {
+  console.error('Errore: La cartella dei bundle o degli assets non esiste.');
+  process.exit(1);
+}
 
 // remove from the assets folder the node_modules folder if it exists
 if (fs.existsSync(assetsFolderPath + '/node_modules'))
@@ -40,6 +57,9 @@ zipStream.on('close', () => {
   });
   form.append('branch', branch);
   form.append('version', version);
+  if (comment && comment !== '') form.append('comment', comment);
+
+  console.log('Uploading bundle...');
   axios
     .post('http://192.168.1.92:3000/project/' + apiKey + '/bundle/', form, {
       headers: {
@@ -50,7 +70,7 @@ zipStream.on('close', () => {
     })
     .then((res) => {
       console.log(
-        'Successfully uploaded bundle. Server responded with:'
+        'Successfully uploaded bundle.'
         // res.data
       );
       //remove the assets.zip file
@@ -60,8 +80,12 @@ zipStream.on('close', () => {
         fs.rmdirSync(assetsFolderPath, { recursive: true });
       //remove the bundle
       if (fs.existsSync(bundlePath)) fs.unlinkSync(bundlePath);
+      process.exit(0);
     })
-    .catch((error) => console.error('Error uploading bundle:', error));
+    .catch((error) => {
+      console.error('Error uploading bundle:', error);
+      process.exit(1);
+    });
 });
 
 function generateRandomString(length) {

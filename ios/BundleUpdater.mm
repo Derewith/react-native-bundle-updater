@@ -129,10 +129,10 @@ RCT_EXPORT_MODULE()
     }
     // Save the assets files in the assets directory
    [self copyFilesFromSource:sourceFolder toDestination:assetsDirectory];
-    NSLog(@"[SDK] bundle and assets saved on disk");
+    NSLog(@"[BUNDLE UPDATER SDK]: bundle and assets saved on disk");
     // log the directory folder content
-    NSLog(@"[SDK] content of the document folder %@", [manager contentsOfDirectoryAtPath:documentsDirectory error:nil]);
-    NSLog(@"[SDK] content of the assets folder %@", [manager contentsOfDirectoryAtPath:assetsDirectory error:nil]);
+    NSLog(@"[BUNDLE UPDATER SDK]: content of the document folder %@", [manager contentsOfDirectoryAtPath:documentsDirectory error:nil]);
+    NSLog(@"[BUNDLE UPDATER SDK]: content of the assets folder %@", [manager contentsOfDirectoryAtPath:assetsDirectory error:nil]);
 
 }
 
@@ -143,7 +143,7 @@ RCT_EXPORT_MODULE()
     NSArray *contents = [manager contentsOfDirectoryAtPath:sourceFolder error:&error];
 
     if (error) {
-        NSLog(@"Error reading contents of directory %@: %@", sourceFolder, [error localizedDescription]);
+        NSLog(@"[BUNDLE UPDATER SDK]: Error reading contents of directory %@: %@", sourceFolder, [error localizedDescription]);
         return;
     }
 
@@ -170,7 +170,7 @@ RCT_EXPORT_MODULE()
         }
     }
     //Log the content of the destination folder
-    NSLog(@"[SDK] content of the %@ folder %@", sourceFolder, [manager contentsOfDirectoryAtPath:destinationFolder error:nil]);
+    NSLog(@"[BUNDLE UPDATER SDK]: content of the %@ folder %@", sourceFolder, [manager contentsOfDirectoryAtPath:destinationFolder error:nil]);
 }
 
 /*!
@@ -283,7 +283,7 @@ RCT_EXPORT_MODULE()
             });
             return;
         }else{
-           NSLog(@"[SDK] It's NOT an UIViewController, display normal bottomsheet");
+           NSLog(@"[BUNDLE UPDATER SDK]: It's NOT an UIViewController, display normal bottomsheet");
         }
     }else if([type isEqualToString:@"modal"]){
         self.updaterVC.isModal = true;
@@ -322,7 +322,7 @@ RCT_EXPORT_MODULE()
         stringForKey:@"bundleId"];
     NSString *oldKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
     if(!oldKey || ![oldKey isEqualToString:apiKey]){
-        NSLog(@"detected api key change");
+        NSLog(@"[BUNDLE UPDATER SDK]: detected api key change");
         //remove the saved bundleId - the actual deletion will be done in the initializeBundle method
         savedBundle = @"";
     }
@@ -348,7 +348,7 @@ RCT_EXPORT_MODULE()
                                                        options:0
                                                          error:&jsonError];
     if (!jsonData) {
-        NSLog(@"[SDK] JSON serialization error: %@", jsonError);
+        NSLog(@"[BUNDLE UPDATER SDK]: JSON serialization error: %@", jsonError);
         reject(@"error", @"JSON serialization error", jsonError);
         return;
     }
@@ -402,7 +402,7 @@ RCT_EXPORT_MODULE()
           completionHandler:^(NSData *data, NSURLResponse *response,
                               NSError *error) {
             if (error) {
-                NSLog(@"[SDK] initialization error: %@", error);
+                NSLog(@"[BUNDLE UPDATER SDK]: initialization error: %@", error);
                 reject(@"error", @"Initialization error", error);
             } else {
 //                NSHTTPURLResponse *httpResponse =
@@ -420,7 +420,7 @@ RCT_EXPORT_MODULE()
                                                     options:0
                                                       error:&jsonError];
                 if (jsonError) {
-                    NSLog(@"[SDK] JSON parsing error: %@", jsonError);
+                    NSLog(@"[BUNDLE UPDATER SDK]: JSON parsing error: %@", jsonError);
                     return;
                 }
 //                NSLog(@"%@", responseDict.description);
@@ -463,7 +463,7 @@ RCT_EXPORT_MODULE()
       //verify if the key is the same as the previous one
       NSString *oldKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
       if(!oldKey || ![oldKey isEqualToString:key]){
-        NSLog(@"detected api key change");
+        NSLog(@"[BUNDLE UPDATER SDK]: detected api key change");
         //if not, delete the old bundle
         NSString *documentDirectoryJSBundleFilePath =
             [[NSSearchPathForDirectoriesInDomains(
@@ -489,11 +489,11 @@ RCT_EXPORT_MODULE()
           fileExistsAtPath:documentDirectoryJSBundleFilePath
                isDirectory:&isDir];
       if (!fileExistsAtPath) {
-          NSLog(@"[SDK]Missing file so picking default");
+          NSLog(@"[BUNDLE UPDATER SDK]: Missing file so picking default");
           return [[NSBundle mainBundle] URLForResource:@"main"
                                          withExtension:@"jsbundle"];
       } else {
-          NSLog(@"[SDK]GOT file %@", documentDirectoryJSBundleFilePath);
+          NSLog(@"[BUNDLE UPDATER SDK]: GOT file %@", documentDirectoryJSBundleFilePath);
           return [NSURL fileURLWithPath:documentDirectoryJSBundleFilePath];
       }
   #endif
@@ -522,14 +522,14 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                                                                options:0
                                                                  error:&jsonError];
             if (!jsonData) {
-                NSLog(@"[SDK] JSON serialization error: %@", jsonError);
+                NSLog(@"[BUNDLE UPDATER SDK]: JSON serialization error: %@", jsonError);
                 return;
             }
           // Fetch script from server
           NSString *url = [NSString
               stringWithFormat:@"%@/project/%@/bundle", self.apiUrl, keyToUse];
 
-          NSLog(@"[SDK] Fetching script from %@", url);
+          NSLog(@"[BUNDLE UPDATER SDK]: Fetching script from %@", url);
 
           NSURL *scriptURL = [NSURL URLWithString:url];
 
@@ -545,7 +545,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
             NSURLSession *session = [NSURLSession sharedSession];
             NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithRequest:request completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
                    if (error) {
-                       NSLog(@"Error: %@", error.localizedDescription);
+                       NSLog(@"[BUNDLE UPDATER SDK]: Error retrieving bundle: %@", error.localizedDescription);
                        return;
                    }
                    NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
@@ -574,17 +574,16 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
 
                        BOOL success = [SSZipArchive unzipFileAtPath:zipFilePath toDestination:destinationFolderPath];
                        if (success) {
-                           NSLog(@"Unzipping successful!");
                             //Log all the file in the destinationFolderPath
                             NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:destinationFolderPath error:nil];
-                            // NSLog(@"[SDK] Unzipped files: %@", contents.description);
+                            // NSLog(@"[BUNDLE UPDATER SDK]: Unzipped files: %@", contents.description);
 
                            //retrieve the name of the bundle from the Content-disposition header
                             NSString *contentDisposition = [[res allHeaderFields] valueForKey:@"Content-disposition"];
                            // split the filename
                             NSArray *contentDispositionArray = [contentDisposition componentsSeparatedByString:@"="];   
                             NSString *bundleName = [contentDispositionArray lastObject];
-                            NSLog(@"[SDK] bundle name: %@", bundleName);
+                            NSLog(@"[BUNDLE UPDATER SDK]: bundle name: %@", bundleName);
                             NSData *bundleData = [NSData dataWithContentsOfFile:[destinationFolderPath stringByAppendingPathComponent:bundleName]];
                             // Calculate sha256 hash
                             NSMutableData *hash =
@@ -600,7 +599,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                             }
                             //check if bundle data is not empty
                             if(bundleData.length == 0){
-                                NSLog(@"[SDK] bundle data is empty");
+                                NSLog(@"[BUNDLE UPDATER SDK]: bundle data is empty");
                                 [self hideBottomSheet];
                                 return;
                             }
@@ -608,11 +607,10 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                             
                           [self saveNewBundle:bundleData andHashString:hashString andAssetsFiles:assetsFiles fromFolder:destinationFolderPath];
                           [self clearDocumentsFolder];
-                          [self clearAssetsFolder];
                           [self reload];
                           // NSLog(@"[SDK] Content of the Documents folder after cleaning %@");
                        } else {
-                           NSLog(@"Unzipping failed!");
+                           NSLog(@"[BUNDLE UPDATER SDK]: Unzipping failed!");
                        }
                 }else if(res.statusCode == 404){
                     //TODO
@@ -627,7 +625,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                         stringWithFormat:
                             @"{\"code\": %@, \"message\": \"%@\"}",
                             errorCode, errorMessage];
-                    NSLog(@"[SDK] An error occurred: %@", errorString);
+                    NSLog(@"[BUNDLE UPDATER SDK]: An error occurred: %@", errorString);
                 }
                 // update done or not - dismiss bottomsheet
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -660,24 +658,23 @@ RCT_EXPORT_METHOD(reload) {
  * @brief clear the documents folder from files that are not intended to be there
  */
 - (void)clearDocumentsFolder{
+    //TODO - custom method and custom class to interact with the documents folder
     NSArray *dirs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true);
     NSArray *documents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dirs.firstObject error:nil];
     NSString *documentPath = dirs.firstObject;
     NSFileManager *defManager = [NSFileManager defaultManager];
     for (NSString *document in documents){
-        //TODO - capire come pulire, potrebbero esserci altre librerie oltre a mmkv che creano un file es: realm
-        // Cambiare quindi metodo di pulizia
-        if(!([document isEqualToString:@"main.jsbundle"] || [document isEqualToString:@"assets"]  || [document isEqualToString:@"main.jsbundle.sha256"] || [document isEqualToString:@"mmkv"])){
-            NSString *path = [documentPath stringByAppendingPathComponent:document];
-            [defManager removeItemAtPath:path error:nil];
+        if([document isEqualToString:@"unzipped"] || [document isEqualToString:@"bundle.zip"]){
+            NSString *pathToDoc = [documentPath stringByAppendingPathComponent:document];
+            NSError *errorRemoving;
+            [defManager removeItemAtPath:pathToDoc error:&errorRemoving];
+            if(errorRemoving){
+                // TODO - understand what to do in this case
+                NSLog(@"[BUNDLE UPDATER ]: Error removing doc %@", document);
+            }
         }
     }
 }
-
--(void)clearAssetsFolder{
-   // TODO - mantain only files that has been passed in the zip with the same structure
-}
-
 
 
 // Don't compile this code when we build for the old architecture.

@@ -17,13 +17,13 @@ import something from 'react-native-bundle-updater';
 and then run:
 
 ```sh
-npx react-native-bundle-updater [apiKey] [branch] [version]
+npx react-native-bundle-updater [apiKey] [branch] [version] [-m "Bundle notes" (optional)]
 ```
 
 Example:
 
 ```sh
-npx react-native-bundle-updater 59fd4ed4ea6e49e68b573b32e5e7add4 master 1.0.0
+npx react-native-bundle-updater **YourApiKey** master 1.0.0 -m "New awesome bundle"
 ```
 
 ## Contributing

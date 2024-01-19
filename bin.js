@@ -1,28 +1,44 @@
 #!/usr/bin/env node
 
 const { exec } = require('child_process');
+const yargs = require('yargs');
+const {
+  REACT_NATIVE_BUNDLE_COMMAND,
+  BUNDLE_UPDATER_CLI_COMMAND,
+} = require('./constants');
 
-if (process.argv.length !== 5) {
-  console.error('Usage: node cli.js [apiKey] [branch] [version]\n');
-  process.exit(1);
-}
+const options = yargs
+  .usage('Usage: $0 [options] <apiKey> <branch> <version>')
+  .option('m', {
+    alias: 'comment',
+    describe: 'Add a comment to the bundle',
+    type: 'string',
+    default: '',
+  })
+  .demandCommand(3, 'You must provide the apiKey, branch and version')
+  .help('h')
+  .alias('h', 'help').argv;
 
-const apiKey = process.argv[2];
-const branch = process.argv[3];
-const version = process.argv[4];
+const apiKey = options._[0];
+const branch = options._[1];
+const version = options._[2];
+const comment = options.comment;
 
-//enter in the node_modules/react-native-bundle-updater folder
-process.chdir('node_modules/react-native-bundle-updater');
-
-const scriptName = 'upload:prod ' + apiKey + ' ' + branch + ' ' + version;
-
-// Esegui lo script utilizzando npm run
-exec(`npm run ${scriptName}`, (error, stdout, stderr) => {
+console.log(`Creating the bundle...`);
+exec(REACT_NATIVE_BUNDLE_COMMAND, (error, stdout, stderr) => {
   if (error) {
-    console.error(`Errore durante l'esecuzione dello script: ${stderr}`);
+    console.error(`Error during the first script execution: ${stderr}`);
     process.exit(1);
   } else {
-    console.log(`Output dello script:\n${stdout}`);
-    process.exit(0);
+    const cliCommand = `${BUNDLE_UPDATER_CLI_COMMAND} ${apiKey} ${branch} ${version} -m "${comment}"`;
+    exec(cliCommand, (_error, _stdout, _stderr) => {
+      if (_error) {
+        console.error(`Error during the second script execution: ${_stderr}`);
+        process.exit(1);
+      } else {
+        console.log(`${_stdout}`);
+        process.exit(0);
+      }
+    });
   }
 });
