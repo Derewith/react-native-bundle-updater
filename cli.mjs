@@ -78,18 +78,18 @@ program
           console.log(chalk.green('\n\n Bundle added \n\n'));
 
           // Read the assets directory and append each file to the form
-          const assetsDir = path.join(projectPath, 'ios/assets');
-          const files = await readdir(assetsDir);
-          await Promise.all(
-            files.map(async (file) => {
-              const filePath = path.join(assetsDir, file);
-              const stats = await stat(filePath);
-              if (stats.isFile()) {
-                form.append('assets', fs.createReadStream(filePath), file);
-                console.log(chalk.green(`\n\n Asset added🇮${filePath}  \n\n`));
-              }
-            })
-          );
+          // const assetsDir = path.join(projectPath, 'ios/assets');
+          // const files = await readdir(assetsDir);
+          // await Promise.all(
+          //   files.map(async (file) => {
+          //     const filePath = path.join(assetsDir, file);
+          //     const stats = await stat(filePath);
+          //     if (stats.isFile()) {
+          //       form.append('assets', fs.createReadStream(filePath), file);
+          //       console.log(chalk.green(`\n\n Asset added🇮${filePath}  \n\n`));
+          //     }
+          //   })
+          // );
 
           axios
             .post(`http://127.0.0.1:3003/project/${apiKey}/bundle/`, form, {

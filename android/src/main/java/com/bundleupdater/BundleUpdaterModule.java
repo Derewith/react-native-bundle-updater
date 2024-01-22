@@ -1,9 +1,14 @@
 package com.bundleupdater;
 
+import static androidx.core.app.ActivityCompat.startActivityForResult;
+
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import com.facebook.react.ReactInstanceManager;
@@ -17,6 +22,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.jakewharton.processphoenix.ProcessPhoenix;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -40,6 +49,8 @@ public class BundleUpdaterModule extends ReactContextBaseJavaModule {
   public static final String NAME = "BundleUpdater";
   private final String _apiUrl = "http://192.168.1.136:3003";
   private boolean isRecreating = false;
+  private BundleUpdaterBottomSheetViewController viewController;
+
 
   public BundleUpdaterModule(ReactApplicationContext context) {
     super(context);
@@ -104,13 +115,37 @@ public class BundleUpdaterModule extends ReactContextBaseJavaModule {
       .start();
   }
 
-  private void showBottomSheet() {
-    var context = getReactApplicationContext();
-    //.runOnUiQueueThread();
-    BundleUpdaterBottomSheetViewController bottomSheet = new BundleUpdaterBottomSheetViewController(
-      context
-    );
-    bottomSheet.show();
+  private void showBottomSheet(String title, String message, String image, String buttonLabel, String buttonLink, String buttonColor, String privacy) {
+    Activity activity = getCurrentActivity();
+
+    if (activity != null) {
+      Log.e("SDK", "WE SHOULD SHOW THE BOTTOM SHEET");
+      viewController = new BundleUpdaterBottomSheetViewController(activity);
+      viewController.show(title, message, image, buttonLabel, buttonLink, buttonColor, privacy);
+    }
+  }
+
+  public void handleJsonResponse(String jsonResponse) {
+      try {
+          JSONObject jsonObject = new JSONObject(jsonResponse);
+
+          if (jsonObject.getBoolean("ok")) {
+              JSONObject updateRequired = jsonObject.getJSONObject("update_required");
+
+              String image = updateRequired.getString("image");
+              String title = updateRequired.getString("title");
+              String message = updateRequired.getString("message");
+              String buttonLabel = updateRequired.getString("button_label");
+              String buttonLink = updateRequired.getString("button_link");
+              String buttonColor = updateRequired.getString("button_color");
+              String privacy = updateRequired.getString("privacy");
+              String bundleId = jsonObject.getString("bundleId");
+
+              showBottomSheet(title, message, image, buttonLabel, buttonLink, buttonColor, privacy);
+          }
+      } catch (JSONException e) {
+          e.printStackTrace();
+      }
   }
 
   @ReactMethod
@@ -166,9 +201,7 @@ public class BundleUpdaterModule extends ReactContextBaseJavaModule {
                         responseJson.get("bundleId").getAsString()
                       );
 
-                      // showBottomSheet(updateRequiredValue);
-                      Log.e("SDK", "WE SHOULD SHOW THE BOTTOM SHEET ");
-                      showBottomSheet();
+                      handleJsonResponse(responseData);
                       promise.resolve("Update required");
                     }
                   }

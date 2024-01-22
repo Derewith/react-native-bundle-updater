@@ -880,7 +880,7 @@ __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, e
   _reactNative.AppRegistry.registerComponent(_app.name, function () {
     return _App.default;
   });
-},0,[1,2,422,425]);
+},0,[1,2,422,429]);
 __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
   function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : {
@@ -53360,38 +53360,57 @@ __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, e
   };
 },421,[63]);
 __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
+  var _interopRequireDefault = _$$_REQUIRE(_dependencyMap[0]);
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.default = App;
-  var React = _interopRequireWildcard(_$$_REQUIRE(_dependencyMap[0]));
-  var _reactNative = _$$_REQUIRE(_dependencyMap[1]);
-  var _jsxRuntime = _$$_REQUIRE(_dependencyMap[2]);
+  var _asyncToGenerator2 = _interopRequireDefault(_$$_REQUIRE(_dependencyMap[1]));
+  var React = _interopRequireWildcard(_$$_REQUIRE(_dependencyMap[2]));
+  var _reactNative = _$$_REQUIRE(_dependencyMap[3]);
+  var _src = _$$_REQUIRE(_dependencyMap[4]);
+  var _jsxRuntime = _$$_REQUIRE(_dependencyMap[5]);
   function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
   function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
   /* eslint-disable */
 
-  // import { checkAndReplaceBundle } from '../../src';
+  // import { restart } from 'react-native-bundle-updater';
+
   function App() {
-    // React.useEffect(() => {
-    //   async function startApp() {
-    //     await checkAndReplaceBundle('70df8a199213d53d892a3eddb6f3bf9c4158');
-    //     console.log('loaded app');
-    //   }
-    //   startApp();
-    // }, []);
-    return /*#__PURE__*/(0, _jsxRuntime.jsx)(_reactNative.ImageBackground, {
+    React.useEffect(function () {
+      (0, _src.initialization)('9980a7943e0db5892b50f6972b02b4c2a2b3').then(function () {
+        return console.log('Initialization successful');
+      }).catch(function (error) {
+        return console.error('Initialization failed', error);
+      });
+    }, []);
+    var handleReload = /*#__PURE__*/function () {
+      var _ref = (0, _asyncToGenerator2.default)(function* () {
+        try {
+          yield (0, _src.restart)();
+        } catch (error) {
+          console.log('[handleReload]:', error);
+        }
+      });
+      return function handleReload() {
+        return _ref.apply(this, arguments);
+      };
+    }();
+    return /*#__PURE__*/(0, _jsxRuntime.jsxs)(_reactNative.ImageBackground, {
       style: styles.container,
-      source: _$$_REQUIRE(_dependencyMap[3]),
+      source: _$$_REQUIRE(_dependencyMap[6]),
       imageStyle: {
         resizeMode: 'contain',
         width: '100%',
         height: '100%',
         opacity: 1
       },
-      children: /*#__PURE__*/(0, _jsxRuntime.jsx)(_reactNative.Text, {
+      children: [/*#__PURE__*/(0, _jsxRuntime.jsx)(_reactNative.Button, {
+        title: "Reload",
+        onPress: handleReload
+      }), /*#__PURE__*/(0, _jsxRuntime.jsx)(_reactNative.Text, {
         children: "W LA FIGA 2025"
-      })
+      })]
     });
   }
   var styles = _reactNative.StyleSheet.create({
@@ -53406,7 +53425,107 @@ __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, e
       marginVertical: 20
     }
   });
-},422,[95,2,205,423]);
+},422,[1,323,95,2,423,205,427]);
+__d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
+  var _interopRequireDefault = _$$_REQUIRE(_dependencyMap[0]);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.checkAndReplaceBundle = checkAndReplaceBundle;
+  exports.initialization = initialization;
+  exports.restart = restart;
+  var _asyncToGenerator2 = _interopRequireDefault(_$$_REQUIRE(_dependencyMap[1]));
+  var _reactNative = _$$_REQUIRE(_dependencyMap[2]);
+  var LINKING_ERROR = `The package 'react-native-bundle-updater' doesn't seem to be linked. Make sure: \n\n` + _reactNative.Platform.select({
+    ios: "- You have run 'pod install'\n",
+    default: ''
+  }) + '- You rebuilt the app after installing the package\n' + '- You are not using Expo Go\n';
+
+  // @ts-expect-error
+  var isTurboModuleEnabled = global.__turboModuleProxy != null;
+  var BundleUpdaterModule = isTurboModuleEnabled ? _$$_REQUIRE(_dependencyMap[3]).default : _reactNative.NativeModules.BundleUpdater;
+  var BundleUpdater = BundleUpdaterModule ? BundleUpdaterModule : new Proxy({}, {
+    get: function get() {
+      throw new Error(LINKING_ERROR);
+    }
+  });
+  function checkAndReplaceBundle(_x) {
+    return _checkAndReplaceBundle.apply(this, arguments);
+  }
+  function _checkAndReplaceBundle() {
+    _checkAndReplaceBundle = (0, _asyncToGenerator2.default)(function* (apiKey) {
+      yield BundleUpdater.checkAndReplaceBundle(apiKey);
+    });
+    return _checkAndReplaceBundle.apply(this, arguments);
+  }
+  function restart() {
+    return _restart.apply(this, arguments);
+  }
+  function _restart() {
+    _restart = (0, _asyncToGenerator2.default)(function* () {
+      yield BundleUpdater.restart();
+    });
+    return _restart.apply(this, arguments);
+  }
+  function initialization(_x2) {
+    return _initialization.apply(this, arguments);
+  }
+  function _initialization() {
+    _initialization = (0, _asyncToGenerator2.default)(function* (apiKey) {
+      yield BundleUpdater.initialization(apiKey);
+    });
+    return _initialization.apply(this, arguments);
+  }
+},423,[424,425,2,426]);
+__d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      "default": obj
+    };
+  }
+  module.exports = _interopRequireDefault, module.exports.__esModule = true, module.exports["default"] = module.exports;
+},424,[]);
+__d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
+  function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+    try {
+      var info = gen[key](arg);
+      var value = info.value;
+    } catch (error) {
+      reject(error);
+      return;
+    }
+    if (info.done) {
+      resolve(value);
+    } else {
+      Promise.resolve(value).then(_next, _throw);
+    }
+  }
+  function _asyncToGenerator(fn) {
+    return function () {
+      var self = this,
+        args = arguments;
+      return new Promise(function (resolve, reject) {
+        var gen = fn.apply(self, args);
+        function _next(value) {
+          asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+        }
+        function _throw(err) {
+          asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+        }
+        _next(undefined);
+      });
+    };
+  }
+  module.exports = _asyncToGenerator, module.exports.__esModule = true, module.exports["default"] = module.exports;
+},425,[]);
+__d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = undefined;
+  var _reactNative = _$$_REQUIRE(_dependencyMap[0]);
+  var _default = exports.default = _reactNative.TurboModuleRegistry.getEnforcing('BundleUpdater');
+},426,[2]);
 __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
   module.exports = _$$_REQUIRE(_dependencyMap[0]).registerAsset({
     "__packager_asset": true,
@@ -53418,7 +53537,7 @@ __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, e
     "name": "example",
     "type": "png"
   });
-},423,[424]);
+},427,[428]);
 __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
   /**
    * Copyright (c) Meta Platforms, Inc. and affiliates.
@@ -53433,13 +53552,13 @@ __d(function (global, _$$_REQUIRE, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, e
   'use strict';
 
   module.exports = _$$_REQUIRE(_dependencyMap[0]);
-},424,[75]);
+},428,[75]);
 __d(function(global, require, _importDefaultUnused, _importAllUnused, module, exports, _dependencyMapUnused) {
   module.exports = {
   "name": "BundleUpdaterExample",
   "displayName": "BundleUpdaterExample"
 }
 ;
-},425,[]);
+},429,[]);
 __r(110);
 __r(0);

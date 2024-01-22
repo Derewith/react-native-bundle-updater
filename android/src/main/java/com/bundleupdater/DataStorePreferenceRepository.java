@@ -10,7 +10,7 @@ public class DataStorePreferenceRepository {
 
   private static SharedPreferences preferences;
 
-r6  public static void init(Context context) {
+  public static void init(Context context) {
     if (preferences == null) {
       preferences =
         context

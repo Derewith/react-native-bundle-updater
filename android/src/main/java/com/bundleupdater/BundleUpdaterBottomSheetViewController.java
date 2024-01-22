@@ -1,9 +1,12 @@
 package com.bundleupdater;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Gravity;
@@ -18,25 +21,31 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class ListItem {
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
-  public String title;
-  public String message;
-  public String imageUrl;
-  public String buttonText;
+// public class ListItem {
 
-  public ListItem(
-    String title,
-    String message,
-    String imageUrl,
-    String buttonText
-  ) {
-    this.title = title;
-    this.message = message;
-    this.imageUrl = imageUrl;
-    this.buttonText = buttonText;
-  }
-}
+//   public String title;
+//   public String message;
+//   public String imageUrl;
+//   public String buttonText;
+
+//   public ListItem(
+//     String title,
+//     String message,
+//     String imageUrl,
+//     String buttonText
+//   ) {
+//     this.title = title;
+//     this.message = message;
+//     this.imageUrl = imageUrl;
+//     this.buttonText = buttonText;
+//   }
+// }
 
 public class BundleUpdaterBottomSheetViewController {
 
@@ -52,14 +61,28 @@ public class BundleUpdaterBottomSheetViewController {
 
   public BundleUpdaterBottomSheetViewController(Context context) {
     this.context = context;
-    this.windowManager =
-      (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+    this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
   }
 
-  public void show() {
+  public void loadImage(String url, ImageView imageView) {
+    new Thread(() -> {
+        try {
+            URL imageUrl = new URL(url);
+            HttpURLConnection connection = (HttpURLConnection) imageUrl.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            imageView.post(() -> imageView.setImageBitmap(myBitmap));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }).start();
+}
+
+  public void show(String title, String message, String image, String buttonLabel, String buttonLink, String buttonColor, String privacy) {
     Handler mainHandler = new Handler(context.getMainLooper());
     mainHandler.post(() -> {
-      // Your existing code to show the view
       // Initialize views
       imageView = new ImageView(context);
       titleLabel = new TextView(context);
@@ -72,18 +95,34 @@ public class BundleUpdaterBottomSheetViewController {
       // Set properties for views
       imageView.setLayoutParams(new ViewGroup.LayoutParams(60, 60));
       titleLabel.setLayoutParams(
-        new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 30)
-      );
+          new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 30));
       messageLabel.setLayoutParams(
-        new ViewGroup.LayoutParams(
-          ViewGroup.LayoutParams.WRAP_CONTENT,
-          ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-      );
+          new ViewGroup.LayoutParams(
+              ViewGroup.LayoutParams.WRAP_CONTENT,
+              ViewGroup.LayoutParams.WRAP_CONTENT));
       button.setLayoutParams(new ViewGroup.LayoutParams(184, 46));
       footerLogoImageView.setLayoutParams(new ViewGroup.LayoutParams(172, 24));
 
+       // Set text for titleLabel and messageLabel
+      titleLabel.setText(title);
+      messageLabel.setText(message);
+      button.setText(buttonLabel);
+
+      loadImage(image, imageView);
+
       // Set background color for modal view
+      button.setBackgroundColor(Color.parseColor(buttonColor));
+      // Calculate the luminance of the background color
+      int backgroundColor = Color.parseColor(buttonColor);
+      double luminance = 0.299 * Color.red(backgroundColor) + 0.587 * Color.green(backgroundColor) + 0.114 * Color.blue(backgroundColor);
+
+      // Set the text color based on the luminance
+      if (luminance > 128) {
+          button.setTextColor(Color.BLACK);
+      } else {
+          button.setTextColor(Color.WHITE);
+      }
+
       modalView.setBackgroundColor(Color.WHITE);
       modalView.setPadding(20, 20, 20, 20);
       modalView.setOrientation(LinearLayout.VERTICAL);
@@ -95,15 +134,24 @@ public class BundleUpdaterBottomSheetViewController {
       modalView.addView(button);
       modalView.addView(footerLogoImageView);
 
+      // int LAYOUT_FLAG;
+      // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      //   LAYOUT_FLAG = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+      // } else {
+      //   LAYOUT_FLAG = WindowManager.LayoutParams.TYPE_PHONE;
+      // }
+
       WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-        WindowManager.LayoutParams.MATCH_PARENT,
-        WindowManager.LayoutParams.MATCH_PARENT,
-        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-        PixelFormat.TRANSLUCENT
-      );
-      params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-      params.dimAmount = 1f;
+          WindowManager.LayoutParams.MATCH_PARENT,
+          WindowManager.LayoutParams.MATCH_PARENT,
+          // LAYOUT_FLAG,
+          WindowManager.LayoutParams.TYPE_APPLICATION_PANEL,
+          // WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+          WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+          | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+          PixelFormat.TRANSLUCENT);
+      // params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+      // params.dimAmount = 1f;
 
       windowManager.addView(modalView, params);
     });
