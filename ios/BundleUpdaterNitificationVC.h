@@ -8,7 +8,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface BundlerUpdaterNitificationVC : UIViewController
+@interface BundleUpdaterNitificationVC : UIViewController
 
 @property (nonatomic) BOOL isNecessaryUpdate;
 

@@ -12,8 +12,8 @@ import SPIndicator
  AlertViewTest: the ViewController to present when an update is available
  TODO - show a loading screen while the update is running
  */
-@objc(BundlerUpdaterNitificationVC)
-class BundlerUpdaterNitificationVC: UIViewController {
+@objc(BundleUpdaterNitificationVC)
+class BundleUpdaterNitificationVC: UIViewController {
     var customView: SPIndicatorView?
     var btn: UIButton = UIButton(frame:CGRect(x:0, y: 0, width: 50, height: 50));
     @objc public var isNecessaryUpdate: Bool = false

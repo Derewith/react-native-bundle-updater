@@ -4,8 +4,14 @@
 #else
     #import <React/RCTBridgeModule.h>
     #import <Foundation/Foundation.h>
+    #import "BundleUpdaterViewController.h"
+    
 NS_ASSUME_NONNULL_BEGIN
     @interface BundleUpdater : NSObject <RCTBridgeModule, UIViewControllerTransitioningDelegate>
+    // managed on Categories
+    @property (class, nonatomic, readonly) NSString *API_URL;
+    @property (nonatomic, strong) BundleUpdaterViewController *updaterVC;
+    // public methods
     + (instancetype)sharedInstance;
     - (void)initialization:(NSString *)apiKey
                 withBranch:(NSString *)branch
