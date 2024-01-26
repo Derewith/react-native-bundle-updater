@@ -22,13 +22,16 @@
     [request setHTTPMethod:@"POST"];
     //Version is taken by the info.plist eg. 1.0.0
     NSString *appVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-    NSDictionary *body = [[NSMutableDictionary alloc]
+    NSMutableDictionary *mutableBody = [[NSMutableDictionary alloc]
         initWithDictionary:@{
-            @"metaData" : [[BundleUpdater sharedInstance] getMetaData],
             @"bundleId" : bundle ? bundle : @"",
             @"version": appVersionString,
             @"branch": branch
         }];
+    if(![BundleUpdater sharedInstance].disableTracking){
+        [mutableBody setObject:[[BundleUpdater sharedInstance] getMetaData] forKey:@"metaData"];
+    }
+    NSDictionary *body = [[NSMutableDictionary alloc] initWithDictionary:mutableBody];
     NSError *jsonError;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:body
                                                        options:0

@@ -1,5 +1,6 @@
 #import "BundleUpdater+FileManager.h"
 #import "CommonCrypto/CommonDigest.h"
+#import "SSZipArchive.h"
 
 @implementation BundleUpdater (FileManager)
 
@@ -95,6 +96,30 @@
                                                   encoding:NSUTF8StringEncoding
                                                      error:nil];
     return oldHash;
+}
+
+
+- (NSString *)unzipBundleAndAssetsInto: (NSURL *) location withSuccess:(BOOL *)success{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSString *zipFilePath = [documentsDirectory stringByAppendingPathComponent:@"bundle.zip"];
+    //remove the old zip file if there is
+    NSFileManager *manager = [NSFileManager defaultManager];
+    if([manager fileExistsAtPath:zipFilePath]){
+        [manager removeItemAtPath:zipFilePath error:nil];
+    }
+    // Move from the cache to the documents directory
+    [[NSFileManager defaultManager] moveItemAtURL:location toURL:[NSURL fileURLWithPath:zipFilePath] error:nil];
+    // Unzip
+    NSString *destinationFolderPath = [documentsDirectory stringByAppendingPathComponent:@"unzipped"];
+    
+    //check if the directory already exist and delete it and all the files inside
+    if([manager fileExistsAtPath:destinationFolderPath]){
+        [manager removeItemAtPath:destinationFolderPath error:nil];
+    }
+    
+    *success = [SSZipArchive unzipFileAtPath:zipFilePath toDestination:destinationFolderPath];
+    return destinationFolderPath;
 }
 
 

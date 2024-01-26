@@ -2,7 +2,6 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTReloadCommand.h>
-#import "SSZipArchive.h"
 #import "BundleUpdater+FileManager.h"
 #import "BundleUpdater+Info.h"
 #import "BundleUpdater+UI.h"
@@ -117,6 +116,7 @@ NSString *const API_URL = @"http://192.168.1.92:3000";
         //remove the saved bundleId - the actual deletion will be done in the initializeBundle method
         savedBundle = @"";
     }
+    __weak id weakself = self;
     [[NetworkManager sharedManager] initializeWithApiKey:apiKey andwithBundle:savedBundle onBranch:branch andWithCompletitionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error) {
             NSLog(@"[BUNDLE UPDATER SDK]: initialization error: %@", error);
@@ -142,7 +142,7 @@ NSString *const API_URL = @"http://192.168.1.92:3000";
                         bool isNecessaryUpdate = [[responseDict valueForKey:@"is_necessary"] boolValue];
                         self.bundle_id_from_api = [responseDict valueForKey:@"bundleId"];
                         dispatch_async(dispatch_get_main_queue(), ^{
-                            [self showUpdateVC:updateRequiredValue withNecessaryUpdate:isNecessaryUpdate];
+                            [weakself showUpdateVC:updateRequiredValue withNecessaryUpdate:isNecessaryUpdate];
                         });
                     }
                 }
@@ -218,6 +218,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
            NSString *_key = [[NSUserDefaults standardUserDefaults] stringForKey:@"bundleKey"];
            NSString *keyToUse = apiKey ? apiKey : _key;
            NSString *appVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+           __weak id weakSelf = self;
            [[NetworkManager sharedManager] downloadBundleWithiKey:keyToUse withBranch:self.branch andVersion:appVersionString withCompletionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
                if (error) {
                    NSLog(@"[BUNDLE UPDATER SDK]: Error retrieving bundle: %@", error.localizedDescription);
@@ -225,42 +226,23 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                }
                NSHTTPURLResponse *res = (NSHTTPURLResponse *)response;
                if (res.statusCode == 200) {
-                   // TODO - move to filemanager
                    // Get the documents directory
-                   NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-                   NSString *documentsDirectory = [paths objectAtIndex:0];
-                   NSString *zipFilePath = [documentsDirectory stringByAppendingPathComponent:@"bundle.zip"];
-                   //remove the old zip file if there is
-                   NSFileManager *manager = [NSFileManager defaultManager];
-                   if([manager fileExistsAtPath:zipFilePath]){
-                       [manager removeItemAtPath:zipFilePath error:nil];
-                   }
-                   // Move from the cache to the documents directory
-                   [[NSFileManager defaultManager] moveItemAtURL:location toURL:[NSURL fileURLWithPath:zipFilePath] error:nil];
-                   // Unzip
-                   NSString *destinationFolderPath = [documentsDirectory stringByAppendingPathComponent:@"unzipped"];
-                   
-                   //check if the directory already exist and delete it and all the files inside
-                   if([manager fileExistsAtPath:destinationFolderPath]){
-                       [manager removeItemAtPath:destinationFolderPath error:nil];
-                   }
-                   
-                   BOOL success = [SSZipArchive unzipFileAtPath:zipFilePath toDestination:destinationFolderPath];
+                   BOOL success = false;
+                   NSString *destinationFolderPath = [weakSelf unzipBundleAndAssetsInto:location withSuccess: &success];
                    if (success) {
                        //Log all the file in the destinationFolderPath
                        NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:destinationFolderPath error:nil];
                        // NSLog(@"[BUNDLE UPDATER SDK]: Unzipped files: %@", contents.description);
-                       
                        //retrieve the name of the bundle from the Content-disposition header
                        NSString *contentDisposition = [[res allHeaderFields] valueForKey:@"Content-disposition"];
                        // split the filename
                        NSArray *contentDispositionArray = [contentDisposition componentsSeparatedByString:@"="];
                        NSString *bundleName = [contentDispositionArray lastObject];
-                       NSLog(@"[BUNDLE UPDATER SDK]: bundle name: %@", bundleName);
+                       // NSLog(@"[BUNDLE UPDATER SDK]: bundle name: %@", bundleName);
                        NSData *bundleData = [NSData dataWithContentsOfFile:[destinationFolderPath stringByAppendingPathComponent:bundleName]];
                        // Calculate sha256 hash
                        NSMutableData *hash =
-                       [self calculateSHA256Hash:bundleData];
+                       [weakSelf calculateSHA256Hash:bundleData];
                        NSString *hashString = [hash base64EncodedStringWithOptions:0];
                        //retrieve the assets files - remove the bundle file
                        NSMutableArray *assetsFiles = [NSMutableArray new];
@@ -272,13 +254,13 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                        //check if bundle data is not empty
                        if(bundleData.length == 0){
                            NSLog(@"[BUNDLE UPDATER SDK]: bundle data is empty");
-                           [self prepareAndHideBottomSheet];
+                           [weakSelf prepareAndHideBottomSheet];
                            return;
                        } 
                        //TODO - __weak typeof(self)weakSelf = self;
-                       [self saveNewBundle:bundleData andHashString:hashString andAssetsFiles:assetsFiles fromFolder:destinationFolderPath];
-                       [self clearDocumentsFolder];
-                       [self reload];
+                       [weakSelf saveNewBundle:bundleData andHashString:hashString andAssetsFiles:assetsFiles fromFolder:destinationFolderPath];
+                       [weakSelf clearDocumentsFolder];
+                       [weakSelf reload];
                        // NSLog(@"[SDK] Content of the Documents folder after cleaning %@");
                    } else {
                        NSLog(@"[BUNDLE UPDATER SDK]: Unzipping failed!");
@@ -299,7 +281,7 @@ RCT_EXPORT_METHOD(checkAndReplaceBundle : (nullable NSString *)apiKey) {
                    NSLog(@"[BUNDLE UPDATER SDK]: An error occurred: %@", errorString);
                }
                // update done or not - dismiss bottomsheet
-               [self prepareAndHideBottomSheet];
+               [weakSelf prepareAndHideBottomSheet];
            }];
        });
 }

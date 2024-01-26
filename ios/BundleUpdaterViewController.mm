@@ -56,17 +56,13 @@
         [self.spinner startAnimating];
         self.loadingView.alpha = 1;
     });
-    BundleUpdater *sharedInstance = [BundleUpdater sharedInstance];
-    [sharedInstance checkAndReplaceBundle:nil];
+    [[BundleUpdater sharedInstance] checkAndReplaceBundle:nil];
 }
 
 - (void)hideBottomSheet {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
--(void)hideBottomSheetAnimated {
-    [self hideBottomSheetAnimated:0.2];
-}
 
 -(void)hideBottomsheetTimer:(NSTimer *)timer{
     id duration = [timer userInfo];
@@ -74,6 +70,10 @@
         NSLog(@"test %@",duration);
         [self hideBottomSheetAnimated:[duration floatValue]];
     }
+}
+
+-(void)hideBottomSheetAnimated {
+    [self hideBottomSheetAnimated:0.2];
 }
 
 -(void)hideBottomSheetAnimated:(float)timing {
@@ -143,7 +143,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
     CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
     CGFloat maxLabelWidth = screenWidth - 80; // Adjust the padding as needed
 
@@ -368,14 +367,10 @@
         self.backgroundView.alpha = 0.5;
     }];
 }
+
+
 - (void)updateViewConstraints {
     [super updateViewConstraints];
-
-    //    CGFloat buttonOffset = CGRectGetMaxY(self.modalView.frame) - 60;
-    //    CGFloat footerLogoOffset = CGRectGetMaxY(self.modalView.frame) - 40;
-
-    // self.buttonBottomConstraint.constant = 60;
-    // self.footerLogoBottomConstraint.constant = 40;
 }
 
 @end

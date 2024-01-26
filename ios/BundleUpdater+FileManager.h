@@ -6,5 +6,6 @@
 - (void)clearDocumentsFolder;
 - (NSMutableData *)calculateSHA256Hash:(NSData *)script;
 - (NSString *)loadHashFromDisk;
+- (NSString *)unzipBundleAndAssetsInto: (NSURL *) location withSuccess:(BOOL *)success;
 
 @end

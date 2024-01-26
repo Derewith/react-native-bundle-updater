@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
     // managed on Categories
     @property (class, nonatomic, readonly) NSString *API_URL;
     @property (nonatomic, strong) BundleUpdaterViewController *updaterVC;
+    @property (nonatomic) BOOL disableTracking;
     // public methods
     + (instancetype)sharedInstance;
     - (void)initialization:(NSString *)apiKey
