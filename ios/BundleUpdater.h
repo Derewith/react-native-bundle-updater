@@ -15,9 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
     // public methods
     + (instancetype)sharedInstance;
     - (void)initialization:(NSString *)apiKey
-                withBranch:(NSString *)branch
-                resolve:(void (^)(NSString *))resolve
-                    reject:(void (^)(NSString *, NSString *, NSError *))reject;
+                withBranch:(NSString *)branch;
     - (NSURL *)initializeBundle:(RCTBridge *)bridge withKey:(NSString *)key;
     - (void)reload;
     - (void)checkAndReplaceBundle: (nullable NSString *)apiKey;

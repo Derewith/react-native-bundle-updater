@@ -103,9 +103,7 @@ NSString *const API_URL = @"http://192.168.1.92:3000";
  *  @param apiKey - the apiKey for the app
  */
 - (void)initialization:(NSString *)apiKey
-              withBranch:(NSString *)branch
-               resolve:(void (^)(NSString *))resolve
-                reject:(void (^)(NSString *, NSString *, NSError *))reject {
+            withBranch:(NSString *)branch{
     [self setBranch:branch];
     //check saved bundle
     NSString *savedBundle = [[NSUserDefaults standardUserDefaults]
@@ -120,9 +118,7 @@ NSString *const API_URL = @"http://192.168.1.92:3000";
     [[NetworkManager sharedManager] initializeWithApiKey:apiKey andwithBundle:savedBundle onBranch:branch andWithCompletitionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         if (error) {
             NSLog(@"[BUNDLE UPDATER SDK]: initialization error: %@", error);
-            reject(@"error", @"Initialization error", error);
         } else {
-            resolve(@"Initialization success");
             NSError *jsonError;
             NSDictionary *responseDict =
                 [NSJSONSerialization JSONObjectWithData:data
