@@ -29,7 +29,7 @@ RCT_EXPORT_MODULE()
     return sharedInstance;
 }
 
-// MARK: - SETTERS
+// MARK: - GETTERS
 NSString *const API_URL = @"http://192.168.1.92:3000";
 
 + (NSString *)API_URL{

@@ -28,7 +28,7 @@
             @"version": appVersionString,
             @"branch": branch
         }];
-    if(![BundleUpdater sharedInstance].disableTracking){
+    if([BundleUpdater sharedInstance].enableTracking){
         [mutableBody setObject:[[BundleUpdater sharedInstance] getMetaData] forKey:@"metaData"];
     }
     NSDictionary *body = [[NSMutableDictionary alloc] initWithDictionary:mutableBody];
