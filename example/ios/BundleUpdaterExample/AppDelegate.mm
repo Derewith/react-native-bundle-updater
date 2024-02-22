@@ -11,15 +11,7 @@
     self.initialProps = @{};
 
     BundleUpdater *bundleUpdater = [BundleUpdater sharedInstance];
-    [bundleUpdater initialization:@"6e776f467b0744d19e62172c59c79efb"
-       withBranch: @"master"
-       resolve:^(NSString *result) {
-        NSLog(@"[APP]Initialization success: %@", result);
-       }
-       reject:^(NSString *code, NSString *message, NSError *error) {
-          NSLog(@"[APP]Initialization error: %@", error);
-       }
-    ];
+    [bundleUpdater initialization:@"6e776f467b0744d19e62172c59c79efb" withBranch: @"staging"];
 
     return [super application:application
         didFinishLaunchingWithOptions:launchOptions];

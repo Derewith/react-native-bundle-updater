@@ -14,12 +14,15 @@ Handle your app updates
 - [Contributing](#contributing)
 - [License](#license)
 
-
 ## Installation
 
-```sh
-bun install react-native-bundle-updater
+At now the installation is only available locally, you can install the package by adding the following line to your package.json file
+
+```json
+"react-native-bundle-updater": "file:path/to/the/package",
 ```
+
+In the near future, the package will be available on npm.
 
 ## Usage
 
@@ -39,7 +42,7 @@ Example:
 npx react-native-bundle-updater **YourApiKey** master 1.0.0 -m "New awesome bundle"
 ```
 
-## Configuration
+## Configuration for React Native
 
 ### iOS
 
@@ -54,15 +57,7 @@ Add the following lines to your AppDelegate.m file
  self.initialProps = @{}; // <-- After this line
 
     BundleUpdater *bundleUpdater = [BundleUpdater sharedInstance];
-    [bundleUpdater initialization:@"YOURKEY"
-       withBranch: @"staging"
-       resolve:^(NSString *result) {
-        NSLog(@"[APP]Initialization success: %@", result);
-       }
-       reject:^(NSString *code, NSString *message, NSError *error) {
-          NSLog(@"[APP]Initialization error: %@", error);
-       }
-    ];
+    [bundleUpdater initialization:@"YOURKEY" withBranch: @"staging"];
 
 .... some other code ....
 
@@ -100,8 +95,6 @@ See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the 
 
 ## License
 
-MIT
+[MIT LICENSE](LICENSE)
 
----
-
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
+2024 © Impresoft Engage
