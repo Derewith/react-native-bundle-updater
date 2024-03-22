@@ -22,6 +22,8 @@
 @property (nonatomic, strong) UIImageView *footerLogoImageView;
 
 @property (nonatomic, strong) UIView *backgroundView;
+@property (nonatomic, strong) UIView *loadingView;
+@property (nonatomic, strong) UIActivityIndicatorView *spinner;
 @property (nonatomic, strong) UIView *modalView;
 
 @property (nonatomic, strong) NSLayoutConstraint *buttonBottomConstraint;

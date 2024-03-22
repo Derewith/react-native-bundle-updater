@@ -62,7 +62,6 @@
                                     2 * shapes.bounds.size.height);
         layer2.position = shapes.center;
         [shapes.layer addSublayer:layer2];
-
         shapes.layer.cornerRadius = 16;
         shapes.layer.borderWidth = 0.5;
         shapes.layer.borderColor =

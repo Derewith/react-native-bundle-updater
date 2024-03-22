@@ -287,6 +287,7 @@ PODS:
     - React-Core
     - SDWebImage (~> 5.0)
     - SPIndicator
+    - SSZipArchive
   - React-NativeModulesApple (0.72.5):
     - React-callinvoker
     - React-Core
@@ -397,6 +398,7 @@ PODS:
   - SDWebImage/Core (5.18.3)
   - SocketRocket (0.6.1)
   - SPIndicator (1.6.4)
+  - SSZipArchive (2.4.3)
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -447,6 +449,7 @@ SPEC REPOS:
     - SDWebImage
     - SocketRocket
     - SPIndicator
+    - SSZipArchive
 
 EXTERNAL SOURCES:
   boost:
@@ -550,7 +553,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: f32f98d8ddbdfd97dea286af90381a731d68c505
   React-jsinspector: aef73cbd43b70675f572214d10fa438c89bf11ba
   React-logger: 2e4aee3e11b3ec4fa6cfd8004610bbb3b8d6cca4
-  react-native-bundle-updater: c6a6abe1c438e4ce16e6c8c43d30892fde92113a
+  react-native-bundle-updater: 184993a89efbdd006d66e207eb7002f3bb9f5d74
   React-NativeModulesApple: 535e26db03f74ecc500748ce79fa349b2ee2ee21
   React-perflogger: cd8886513f68e1c135a1e79d20575c6489641597
   React-RCTActionSheet: 726d2615ca62a77ce3e2c13d87f65379cdc73498
@@ -571,6 +574,7 @@ SPEC CHECKSUMS:
   SDWebImage: 96e0c18ef14010b7485210e92fac888587ebb958
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   SPIndicator: 93e0a4fb23de51294ac48e874c0f081a5e293e4f
+  SSZipArchive: fe6a26b2a54d5a0890f2567b5cc6de5caa600aef
   Yoga: 86fed2e4d425ee4c6eab3813ba1791101ee153c6
 
 PODFILE CHECKSUM: 7431905f8d399ca127564f129bfa93819111c9b2

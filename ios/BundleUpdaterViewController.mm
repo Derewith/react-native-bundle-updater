@@ -50,20 +50,19 @@
 }
 
 - (void)reloadApp:(UIButton *)sender {
-    BundleUpdater *sharedInstance = [BundleUpdater sharedInstance];
-    [sharedInstance checkAndReplaceBundle:nil];
-    // [sharedInstance reload];
-    // hide the modal
-    //[self dismissViewControllerAnimated:YES completion:nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // TODO - understand if the view must be shown ony while bundle is reloading
+        // or even when the app is checking for bundle to update and the user needs to press the button
+        [self.spinner startAnimating];
+        self.loadingView.alpha = 1;
+    });
+    [[BundleUpdater sharedInstance] checkAndReplaceBundle:nil];
 }
 
 - (void)hideBottomSheet {
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
--(void)hideBottomSheetAnimated {
-    [self hideBottomSheetAnimated:0.2];
-}
 
 -(void)hideBottomsheetTimer:(NSTimer *)timer{
     id duration = [timer userInfo];
@@ -71,6 +70,10 @@
         NSLog(@"test %@",duration);
         [self hideBottomSheetAnimated:[duration floatValue]];
     }
+}
+
+-(void)hideBottomSheetAnimated {
+    [self hideBottomSheetAnimated:0.2];
 }
 
 -(void)hideBottomSheetAnimated:(float)timing {
@@ -140,7 +143,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
     CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
     CGFloat maxLabelWidth = screenWidth - 80; // Adjust the padding as needed
 
@@ -165,6 +167,15 @@
     self.button.translatesAutoresizingMaskIntoConstraints = NO;
     self.button.userInteractionEnabled = YES;
 
+    //create the loading view
+    self.loadingView = [[UIView alloc] initWithFrame:self.view.bounds];
+    self.loadingView.backgroundColor = [UIColor whiteColor];
+    self.loadingView.alpha = 0;
+    self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    self.spinner.center = self.loadingView.center;
+    [self.loadingView addSubview:self.spinner];
+    
+    [self.view addSubview: self.loadingView];
     // Create the background view
     self.backgroundView = [[UIView alloc] initWithFrame:self.view.bounds];
     self.backgroundView.backgroundColor = [UIColor blackColor];
@@ -176,7 +187,7 @@
         [self.backgroundView addGestureRecognizer:tapGesture];
     }
     [self.view addSubview:self.backgroundView];
-
+    
     // Create the modal view
     modalPadding = 25;
     float paddingH = 48;
@@ -356,14 +367,10 @@
         self.backgroundView.alpha = 0.5;
     }];
 }
+
+
 - (void)updateViewConstraints {
     [super updateViewConstraints];
-
-    //    CGFloat buttonOffset = CGRectGetMaxY(self.modalView.frame) - 60;
-    //    CGFloat footerLogoOffset = CGRectGetMaxY(self.modalView.frame) - 40;
-
-    // self.buttonBottomConstraint.constant = 60;
-    // self.footerLogoBottomConstraint.constant = 40;
 }
 
 @end
